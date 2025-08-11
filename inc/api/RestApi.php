@@ -43,15 +43,58 @@ class RestApi extends WP_REST_Controller {
 		$this->loader     = $loader;
 		$this->controller = $controller;
 		$this->namespace  = 'omnipress-ai-chatbot/v1';
-		$this->rest_base  = 'chat';
+
+		$this->loader->add_action( 'rest_api_init', $this, 'register_routes' );
+	}
+
+
+	public function get_items_permissions_check( $request ) {
+		return current_user_can( 'manage_options' );
+	}
+
+	public function create_item_permissions_check( $request ) {
+		return current_user_can( 'manage_options' );
+	}
+
+	public function update_item_permissions_check( $request ) {
+		return current_user_can( 'manage_options' );
+	}
+	/**
+	 * Send success response
+	 *
+	 * @param mixed $data   Data to send.
+	 * @param int   $status Status code.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function send_success_response( $data, $status = 200 ) {
+		$response = rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => $data,
+			)
+		);
+		$response->set_status( $status );
+		return $response;
 	}
 
 	/**
-	 * Register routes function
+	 * Send error response
 	 *
-	 * @return void
+	 * @param mixed $data   Data to send.
+	 * @param int   $status Status code.
+	 *
+	 * @return \WP_REST_Response
 	 */
-	public function register_routes() {
-		$this->loader->add_action( 'rest_api_init', $this, 'register_routes' );
+	public function send_error_response( $data, $status = 500 ) {
+		$response = rest_ensure_response(
+			array(
+				'success' => false,
+				'data'    => $data,
+			)
+		);
+
+		$response->set_status( $status );
+		return $response;
 	}
 }

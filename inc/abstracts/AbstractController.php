@@ -29,7 +29,7 @@ abstract class AbstractController {
 	 * @return array|bool
 	 */
 	public function get_items() {
-		if ( method_exists( $this->services, 'get_items' ) ) {
+		if ( method_exists( $this->services, 'find_all' ) ) {
 			return $this->services->find_all();
 		}
 		return false;
@@ -74,6 +74,35 @@ abstract class AbstractController {
 	public function update_item( int $id, mixed $data ) {
 		if ( method_exists( $this->services, 'update_item' ) ) {
 			return $this->services->update_item( $id, $data );
+		}
+		return false;
+	}
+
+	/**
+	 * Delete item
+	 *
+	 * @param int $id item id.
+	 *
+	 * @return bool
+	 */
+	public function delete_item( int $id ) {
+		if ( method_exists( $this->services, 'delete_item' ) ) {
+			return $this->services->delete_item( $id );
+		}
+		return false;
+	}
+
+	/**
+	 * Update items
+	 *
+	 * @param mixed $data item data.
+	 *
+	 * @return bool
+	 */
+	public function update_items( $data ) {
+		if ( method_exists( $this->services, 'update_items' ) ) {
+			error_log( 'updatingggg' );
+			return $this->services->update_items( $data );
 		}
 		return false;
 	}

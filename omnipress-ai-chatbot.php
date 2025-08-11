@@ -24,7 +24,6 @@ omnipress_ai_chatbot_define_constants();
 require_once __DIR__ . '/inc/require.php';
 
 $core = new Core();
-$core->init();
 
 /**
  * Create instance of the plugin.

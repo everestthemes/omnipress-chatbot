@@ -35,7 +35,25 @@ class Admin {
 		$this->loader = $loader;
 		if ( is_admin() ) {
 			$this->register_actions();
+			$this->loader->add_action( 'admin_enqueue_scripts', $this, 'enqueue_scripts' );
 		}
+	}
+
+	/**
+	 * Enqueue admin scripts and styles.
+	 *
+	 * @param string $hook The current admin page hook.
+	 *
+	 * @return void
+	 */
+	public function enqueue_scripts( string $hook ): void {
+		if ( 'tools_page_omnipress-ai-chatbot' !== $hook ) {
+			return;
+		}
+
+		$assets = require_once OMNIPRESS_AI_CHATBOT_DIR . 'build/js/index.asset.php';
+		wp_enqueue_script( 'omnipress-ai-chatbot-admin', OMNIPRESS_AI_CHATBOT_URL . 'build/js/index.js', $assets['dependencies'], $assets['version'], true );
+		wp_enqueue_style( 'omnipress-ai-chatbot-admin', OMNIPRESS_AI_CHATBOT_URL . 'build/css/global.css', array(), $assets['version'] );
 	}
 
 	/**
@@ -112,6 +130,7 @@ class Admin {
 	 * Register settings menu
 	 */
 	public function register_settings_menu(): void {
+		error_log( 'register_settings_menu' );
 		add_management_page(
 			'OmniPress AI Chatbot',
 			'OmniPress AI Chatbot',
@@ -123,7 +142,9 @@ class Admin {
 
 	public function render_settings(): void {
 		?>
-		<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+		<div id="omnipress-chatbot-settings" class="fixed top-0 left-0 md:left-[160px] right-0 bottom-0 z-50 pt-11 bg-background px-4">
+
+		</div>
 		<?php
 	}
 }

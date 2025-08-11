@@ -2,7 +2,7 @@
 
 namespace Omnipress\AIChatbot\Abstracts;
 
-if ( defined( 'ABSPATH' ) ) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
@@ -18,9 +18,9 @@ abstract class AbstractService {
 	/**
 	 * Find all items
 	 *
-	 * @return array
+	 * @return mixed
 	 */
-	abstract public function find_all(): array;
+	abstract public function find_all();
 
 	/**
 	 * Find one item
@@ -29,7 +29,7 @@ abstract class AbstractService {
 	 *
 	 * @return mixed
 	 */
-	abstract public function find_one( int $id ): mixed;
+	abstract public function find_one( int $id );
 
 
 	/**
@@ -39,7 +39,7 @@ abstract class AbstractService {
 	 *
 	 * @return bool
 	 */
-	abstract public function add_item( mixed $data ): bool;
+	abstract public function add_item( mixed $data );
 
 	/**
 	 * Update item
@@ -49,7 +49,7 @@ abstract class AbstractService {
 	 *
 	 * @return bool
 	 */
-	abstract public function update_item( int $id, mixed $data ): bool;
+	abstract public function update_item( int $id, mixed $data );
 
 	/**
 	 * Delete item
@@ -58,5 +58,5 @@ abstract class AbstractService {
 	 *
 	 * @return bool
 	 */
-	abstract public function delete_item( int $id ): bool;
+	abstract public function delete_item( int $id );
 }
