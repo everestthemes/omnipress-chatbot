@@ -1,0 +1,48 @@
+<?php
+
+use Omnipress\AIChatbot\Core;
+/**
+ * Plugin Name: Omnipress AI Chatbot
+ * Plugin URI: https://github.com/everestthemes/omnipress-ai-chatbot
+ * Description: Omnipress AI Chatbot
+ * Version: 0.1.0
+ * Author: Everest Themes
+ * Author URI: https://everestthemes.com
+ * Text Domain: omnipress-ai-chatbot
+ * Domain Path: /languages
+ * License: GPL-2.0+
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.txt
+ */
+function omnipress_ai_chatbot_define_constants() {
+	define( 'OMNIPRESS_AI_CHATBOT_VERSION', '0.1.0' );
+	define( 'OMNIPRESS_AI_CHATBOT_DIR', plugin_dir_path( __FILE__ ) );
+	define( 'OMNIPRESS_AI_CHATBOT_URL', plugin_dir_url( __FILE__ ) );
+}
+
+omnipress_ai_chatbot_define_constants();
+
+require_once __DIR__ . '/inc/require.php';
+
+$core = new Core();
+$core->init();
+
+/**
+ * Create instance of the plugin.
+
+ * @return void
+ */
+function omnipress_ai_chatbot_activate() {
+	// TODO: all the activation related code goes here.
+}
+
+/**
+ * Deactivate the plugin.
+ *
+ * @return void
+ */
+function omnipress_ai_chatbot_deactivate() {
+	// TODO: all the deactivation related code goes here.
+}
+
+register_activation_hook( __FILE__, 'omnipress_ai_chatbot_activate' );
+register_deactivation_hook( __FILE__, 'omnipress_ai_chatbot_deactivate' );

@@ -1,0 +1,23 @@
+{
+	"name": "omnipress-ai-chatbot",
+	"version": "0.1.0",
+	"description": "OmniPress AI Chatbot",
+	"main": "index.js",
+	"license": "MIT",
+	"author": "n1technology",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/everestthemes/omnipress-ai-chatbot.git"
+	},
+	"scripts": {
+		"build": "wordpress-scripts build",
+		"start": "wordpress-scripts start"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^30.21.0"
+	},
+	"dependencies": {
+		"@tailwindcss/cli": "^4.1.11",
+		"tailwindcss": "^4.1.11"
+	}
+}
