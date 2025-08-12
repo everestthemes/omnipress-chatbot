@@ -1,6 +1,6 @@
 import { settingsApi } from '@/src/api/settings';
 import { Button } from '@/src/components/ui/button';
-import { Card, CardContent, CardFooter } from '@/src/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/src/components/ui/card';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
 import { Switch } from '@/src/components/ui/switch';
@@ -41,9 +41,9 @@ export const DashboardPage = () => {
 		<>
 			<Toaster richColors />
 			<Card>
-				<h3 className="bg-gradient-to-r !m-0 !text-2xl from-blue-500 to-indigo-500 px-4 py-2 rounded bg-clip-text !text-transparent">
-					Omnipress AI Chatbot
-				</h3>
+				<CardHeader>
+					<h3 className="text-xl font-bold !text-foreground">Chatbot Settings</h3>
+				</CardHeader>
 
 				<CardContent className="space-y-8">
 					<div className="space-y-2">
@@ -91,7 +91,6 @@ export const DashboardPage = () => {
 						<Label className="mb-2" htmlFor="isEnableChatBot">
 							Enable Chatbot
 						</Label>
-						<Switch />
 						<Tooltip>
 							<TooltipTrigger
 								asChild

@@ -7,6 +7,7 @@ use Omnipress\AIChatbot\Admin\Admin;
 use Omnipress\AIChatbot\Api\AdminSettingApi;
 use Omnipress\AIChatbot\Api\RestApi;
 use Omnipress\AIChatbot\Controllers\AdminSettingsController;
+use Omnipress\AIChatbot\Client\InitChatbot;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -27,14 +28,14 @@ final class Core {
 	 *
 	 * @var Loader $loader
 	 */
-	protected Loader $loader;
+	public Loader $loader;
 
 	/**
 	 * Admin class.
 	 *
 	 * @var Admin $admin
 	 */
-	protected Admin $admin;
+	public Admin $admin;
 
 	/**
 	 * AdminSettingApi class.
@@ -55,14 +56,21 @@ final class Core {
 	 *
 	 * @var AbstractController $controller
 	 */
-	protected AbstractController $controller;
+	public AbstractController $controller;
 
 	/**
 	 * AdminSettingsController class.
 	 *
 	 * @var AdminSettingsController $admin_settings_controller
 	 */
-	protected AdminSettingsController $admin_settings_controller;
+	public AdminSettingsController $admin_settings_controller;
+
+	/**
+	 * InitChatbot class.
+	 *
+	 * @var InitChatbot $init_chatbot
+	 */
+	public InitChatbot $init_chatbot;
 
 	/**
 	 * Construct function
@@ -72,6 +80,7 @@ final class Core {
 		$this->admin                     = new Admin( $this->loader );
 		$this->admin_settings_controller = new AdminSettingsController();
 		$this->admin_setting_api         = new AdminSettingApi( $this->loader, $this->admin_settings_controller );
+		$this->init_chatbot              = new InitChatbot( $this );
 
 		$this->loader->register_hooks();
 	}

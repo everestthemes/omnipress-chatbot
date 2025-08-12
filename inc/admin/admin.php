@@ -2,14 +2,11 @@
 
 namespace Omnipress\AIChatbot\Admin;
 
-use Omnipress\AIChatbot\Core;
 use Omnipress\AIChatbot\Loader;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-
-error_log( 'admin settings' );
 
 /**
  * Admin class

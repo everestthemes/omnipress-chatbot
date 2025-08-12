@@ -23,3 +23,6 @@ require_once OMNIPRESS_AI_CHATBOT_DIR . '/inc/api/AdminSettingsApi.php';
 
 // Controllers.
 require_once OMNIPRESS_AI_CHATBOT_DIR . '/inc/controllers/AdminSettingsController.php';
+
+// Client.
+require_once OMNIPRESS_AI_CHATBOT_DIR . '/inc/client/InitChatbot.php';
