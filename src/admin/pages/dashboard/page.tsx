@@ -1,8 +1,14 @@
 import { settingsApi } from '@/src/api/settings';
 import { Button } from '@/src/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/src/components/ui/card';
+import {
+	Card,
+	CardContent,
+	CardFooter,
+	CardHeader,
+} from '@/src/components/ui/card';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
+import { Skeleton } from '@/src/components/ui/skeleton';
 import { Switch } from '@/src/components/ui/switch';
 import { TooltipContent, TooltipTrigger } from '@/src/components/ui/tooltip';
 import { Tooltip } from '@radix-ui/react-tooltip';
@@ -16,11 +22,16 @@ export const DashboardPage = () => {
 	const [ isEnableChatBot, setIsEnableChatBot ] = useState( false );
 
 	useEffect( () => {
-		settingsApi.get().then( ( res ) => {
-			console.log( res );
-			setApiKey( res.data.apiKey );
-			setIsEnableChatBot( res.data.isEnableChatBot );
-		} );
+		setLoading( true );
+		settingsApi
+			.get()
+			.then( ( res ) => {
+				setApiKey( res.data.apiKey );
+				setIsEnableChatBot( res.data.isEnableChatBot );
+			} )
+			.finally( () => {
+				setLoading( false );
+			} );
 	}, [] );
 
 	const handleSaveSettings = async () => {
@@ -42,74 +53,88 @@ export const DashboardPage = () => {
 			<Toaster richColors />
 			<Card>
 				<CardHeader>
-					<h3 className="text-xl font-bold !text-foreground">Chatbot Settings</h3>
+					<h3 className="text-xl font-bold !text-foreground">
+						Chatbot Settings
+					</h3>
 				</CardHeader>
 
-				<CardContent className="space-y-8">
-					<div className="space-y-2">
-						<div className="flex items-center gap-2">
-							<Label htmlFor="apiKey">API Key</Label>
+				{ loading ? (
+					<div className="flex items-center space-x-4 p-4">
+						<div className="space-y-2">
+							<Skeleton className="h-4 w-[250px]" />
+							<Skeleton className="h-4 w-[200px]" />
+						</div>
+					</div>
+				) : (
+					<CardContent className="space-y-8">
+						<div className="space-y-2">
+							<div className="flex items-center gap-2">
+								<Label htmlFor="apiKey">API Key</Label>
+								<Tooltip>
+									<TooltipTrigger
+										asChild
+										className="cursor-pointer"
+									>
+										<FileQuestionMark className="w-4 h-4" />
+									</TooltipTrigger>
+									<TooltipContent
+										align="start"
+										className="max-w-[300px] bg-white border border-gray-200"
+									>
+										<p className="!text-gray-500">
+											Enter your Omnipress api Key. You
+											can get it from{ ' ' }
+											<a
+												className="text-blue-500 hover:underline"
+												href="https://omnipressai.com"
+												target="_blank"
+											>
+												Omnipress
+											</a>
+										</p>
+									</TooltipContent>
+								</Tooltip>
+							</div>
+							<Input
+								type="password"
+								id="apiKey"
+								placeholder="Enter your API key"
+								value={ apiKey }
+								onChange={ ( e ) =>
+									setApiKey( e.target.value )
+								}
+							/>
+						</div>
+
+						<div className="space-y-2 flex gap-4 items-center">
+							<Switch
+								id="isEnableChatBot"
+								checked={ isEnableChatBot }
+								onCheckedChange={ setIsEnableChatBot }
+							/>
+							<Label className="mb-2" htmlFor="isEnableChatBot">
+								Enable Chatbot
+							</Label>
 							<Tooltip>
 								<TooltipTrigger
 									asChild
-									className="cursor-pointer"
+									className="cursor-pointer mb-2"
 								>
 									<FileQuestionMark className="w-4 h-4" />
 								</TooltipTrigger>
 								<TooltipContent
 									align="start"
-									className="max-w-[300px] bg-white border border-gray-200"
+									className="max-w-[300px] bg-white border border-gray-200 mb-2"
 								>
-									<p className="!text-gray-500">
-										Enter your Omnipress api Key. You can
-										get it from{ ' ' }
-										<a
-											className="text-blue-500 hover:underline"
-											href="https://omnipressai.com"
-											target="_blank"
-										>
-											Omnipress
-										</a>
+									<p className="!text-gray-500 mb-2">
+										When Enable this option, the chatbot
+										will be visible on your website.
 									</p>
 								</TooltipContent>
 							</Tooltip>
 						</div>
-						<Input
-							id="apiKey"
-							placeholder="Enter your API key"
-							value={ apiKey }
-							onChange={ ( e ) => setApiKey( e.target.value ) }
-						/>
-					</div>
-
-					<div className="space-y-2 flex gap-4 items-center">
-						<Switch
-							id="isEnableChatBot"
-							checked={ isEnableChatBot }
-							onCheckedChange={ setIsEnableChatBot }
-						/>
-						<Label className="mb-2" htmlFor="isEnableChatBot">
-							Enable Chatbot
-						</Label>
-						<Tooltip>
-							<TooltipTrigger
-								asChild
-								className="cursor-pointer mb-2"
-							>
-								<FileQuestionMark className="w-4 h-4" />
-							</TooltipTrigger>
-							<TooltipContent
-								align="start"
-								className="max-w-[300px] bg-white border border-gray-200 mb-2"
-							>
-								<p className="!text-gray-500 mb-2">
-									When Enable this option, the chatbot will be
-									visible on your website.
-								</p>
-							</TooltipContent>
-						</Tooltip>
-					</div>
-				</CardContent>
+					</CardContent>
+				) }
 
 				<CardFooter>
 					<Button onClick={ handleSaveSettings } disabled={ loading }>

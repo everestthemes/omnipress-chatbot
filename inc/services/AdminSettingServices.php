@@ -15,11 +15,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @since 0.1.0
  */
 class AdminSettingServices extends AbstractService {
+	const ADMIN_SETTING_OPTION = 'omnipress_ai_chatbot_settings';
 	/**
 	 * {@inheritDoc}
 	 */
 	public function find_all() {
-		return get_option( 'omnipress_ai_chatbot_settings', array() );
+		return get_option( self::ADMIN_SETTING_OPTION, array() );
 	}
 
 	/**

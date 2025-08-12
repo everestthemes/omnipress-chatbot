@@ -7,20 +7,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use Omnipress\AIChatbot\Abstracts\AbstractController;
-use Omnipress\AIChatbot\Services\AdminSettingServices;
+use Omnipress\AIChatbot\Services\ChatServices;
 
 /**
- * AdminSettingsController class.
+ * ChatController class.
 
- * @author Asishwor
+ * @author omnipressteam
  * @copyright (c) 2025
+ *
  * @since 0.1.0
  */
-final class AdminSettingsController extends AbstractController {
+final class ChatController extends AbstractController {
 	/**
 	 * Construct function
 	 */
 	public function __construct() {
-		$this->services = new AdminSettingServices();
+		$this->services = new ChatServices();
 	}
 }

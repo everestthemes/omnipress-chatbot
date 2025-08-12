@@ -1,6 +1,9 @@
 <?php
 namespace Omnipress\AIChatbot\Client;
 
+use Omnipress\AIChatbot\Abstracts\AbstractController;
+use Omnipress\AIChatbot\Api\ChatApi;
+use Omnipress\AIChatbot\Controllers\ChatController;
 use Omnipress\AIChatbot\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -16,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 0.1.0
  */
-class InitChatbot {
+final class InitChatbot {
 	/**
 	 * Core class.
 	 *
@@ -40,7 +43,11 @@ class InitChatbot {
 		$this->core->loader->add_action( 'wp_enqueue_scripts', $this, 'load_assets' );
 	}
 
-
+	/**
+	 * Load chatbot assets.
+	 *
+	 * @return void
+	 */
 	public function load_assets() {
 		$assets = require_once OMNIPRESS_AI_CHATBOT_DIR . 'build/js/chatbot.asset.php';
 		wp_enqueue_script( 'omnipress-ai-chatbot', OMNIPRESS_AI_CHATBOT_URL . '/build/js/chatbot.js', $assets['dependencies'], $assets['version'], true );
@@ -52,7 +59,8 @@ class InitChatbot {
 	 */
 	public function can_render(): bool {
 		$admin_settings = $this->core->admin_settings_controller->get_items();
-		//phpcs:ignore.
+
+		//phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 		return isset( $admin_settings->isEnableChatBot ) && $admin_settings->isEnableChatBot;
 	}
 

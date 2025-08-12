@@ -37,7 +37,7 @@ abstract class AbstractService {
 	 *
 	 * @param mixed $data item data.
 	 *
-	 * @return bool
+	 * @return mixed
 	 */
 	abstract public function add_item( mixed $data );
 
@@ -47,16 +47,25 @@ abstract class AbstractService {
 	 * @param int   $id item id.
 	 * @param mixed $data item data.
 	 *
-	 * @return bool
+	 * @return mixed
 	 */
 	abstract public function update_item( int $id, mixed $data );
+
+	/**
+	 * Update old values with new one in bulk.
+	 *
+	 * @param mixed $data New values.
+	 *
+	 * @return mixed
+	 */
+	abstract public function update_items( $data );
 
 	/**
 	 * Delete item
 	 *
 	 * @param int $id item id.
 	 *
-	 * @return bool
+	 * @return mixed
 	 */
 	abstract public function delete_item( int $id );
 }

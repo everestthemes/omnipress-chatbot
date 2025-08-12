@@ -5,9 +5,11 @@ namespace Omnipress\AIChatbot;
 use Omnipress\AIChatbot\Abstracts\AbstractController;
 use Omnipress\AIChatbot\Admin\Admin;
 use Omnipress\AIChatbot\Api\AdminSettingApi;
+use Omnipress\AIChatbot\Api\ChatApi;
 use Omnipress\AIChatbot\Api\RestApi;
 use Omnipress\AIChatbot\Controllers\AdminSettingsController;
 use Omnipress\AIChatbot\Client\InitChatbot;
+use Omnipress\AIChatbot\Controllers\ChatController;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -66,11 +68,26 @@ final class Core {
 	public AdminSettingsController $admin_settings_controller;
 
 	/**
+	 * ChatController class.
+	 *
+	 * @var ChatController $chat_controller
+	 */
+	public ChatController $chat_controller;
+
+	/**
+	 * ChatApi class.
+	 *
+	 * @var ChatApi $chat_api
+	 */
+	public ChatApi $chat_api;
+
+	/**
 	 * InitChatbot class.
 	 *
 	 * @var InitChatbot $init_chatbot
 	 */
 	public InitChatbot $init_chatbot;
+
 
 	/**
 	 * Construct function
@@ -79,8 +96,14 @@ final class Core {
 		$this->loader                    = new Loader();
 		$this->admin                     = new Admin( $this->loader );
 		$this->admin_settings_controller = new AdminSettingsController();
-		$this->admin_setting_api         = new AdminSettingApi( $this->loader, $this->admin_settings_controller );
-		$this->init_chatbot              = new InitChatbot( $this );
+		$this->chat_controller           = new ChatController();
+
+		// Register apis.
+		$this->admin_setting_api = new AdminSettingApi( $this->loader, $this->admin_settings_controller );
+		$this->chat_api          = new ChatApi( $this->loader, $this->chat_controller );
+
+		// initalize chat bot.
+		$this->init_chatbot = new InitChatbot( $this );
 
 		$this->loader->register_hooks();
 	}

@@ -72,44 +72,6 @@ class Admin {
 	 * todo: Page base access control (less priority that will be inplement in the next phase).
 	 */
 
-
-	/**
-	 * Added  settings options with setting page ui.
-	 *
-	 * @return void
-	 */
-	public function add_settings_page(): void {
-
-		register_setting(
-			'omnipress_ai_chatbot_settings',
-			'omnipress_ai_chatbot_settings',
-			array( $this, 'validate_settings' )
-		);
-
-		add_settings_section(
-			'omnipress-chat-bot-settings',
-			'OmniPress AI Chatbot Settings',
-			array( $this, 'render_settings_section' ),
-			'omnipress-ai-chatbot'
-		);
-
-		add_settings_field(
-			'omnipress_ai_chatbot_api_key',
-			'API Key',
-			array( $this, 'render_api_key_field' ),
-			'omnipress-ai-chatbot',
-			'omnipress-chat-bot-settings'
-		);
-	}
-
-	public function render_settings_section(): void {
-		echo '<p>OmniPress AI Chatbot Settings</p>';
-	}
-
-	public function render_api_key_field(): void {
-		echo '<input type="text" name="omnipress_ai_chatbot_api_key" value="' . esc_attr( get_option( 'omnipress_ai_chatbot_api_key' ) ) . '" />';
-	}
-
 	/**
 	 *
 	 * Calidate data if required.
@@ -119,7 +81,6 @@ class Admin {
 	 * @return mixed
 	 */
 	public function validate_settings( $input ) {
-		error_log( 'settings input ==> ' . print_r( $input, true ) );
 		return $input;
 	}
 
@@ -127,10 +88,9 @@ class Admin {
 	 * Register settings menu
 	 */
 	public function register_settings_menu(): void {
-		error_log( 'register_settings_menu' );
 		add_management_page(
-			'OmniPress AI Chatbot',
-			'OmniPress AI Chatbot',
+			'AI Chatbot',
+			'AI Chatbot',
 			'manage_options',
 			'omnipress-ai-chatbot',
 			array( $this, 'render_settings' )

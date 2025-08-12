@@ -1,5 +1,6 @@
 import apiFetch from '@wordpress/api-fetch';
 import { toast } from 'sonner';
+
 export const settingsApi = {
 	get: async () => {
 		try {

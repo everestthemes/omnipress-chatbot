@@ -69,7 +69,7 @@ abstract class AbstractController {
 	 * @param int   $id item id.
 	 * @param mixed $data item data.
 	 *
-	 * @return bool
+	 * @return mixed
 	 */
 	public function update_item( int $id, mixed $data ) {
 		if ( method_exists( $this->services, 'update_item' ) ) {
@@ -83,7 +83,7 @@ abstract class AbstractController {
 	 *
 	 * @param int $id item id.
 	 *
-	 * @return bool
+	 * @return mixed
 	 */
 	public function delete_item( int $id ) {
 		if ( method_exists( $this->services, 'delete_item' ) ) {
@@ -97,11 +97,10 @@ abstract class AbstractController {
 	 *
 	 * @param mixed $data item data.
 	 *
-	 * @return bool
+	 * @return mixed
 	 */
 	public function update_items( $data ) {
 		if ( method_exists( $this->services, 'update_items' ) ) {
-			error_log( 'updatingggg' );
 			return $this->services->update_items( $data );
 		}
 		return false;
