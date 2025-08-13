@@ -81,14 +81,13 @@ class ChatServices extends AbstractService {
 			array(
 				'method'  => 'POST',
 				'body'    => wp_json_encode( $data ),
+				'timeout' => '30',
 				'headers' => array(
 					'Content-Type'  => 'application/json',
 					'Authorization' => 'Bearer ' . $configs->apiKey,
 				),
 			)
 		);
-
-		error_log( 'remote response' . print_r( $res, true ) );
 
 		if ( is_wp_error( $res ) ) {
 			return array(

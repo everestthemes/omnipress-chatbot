@@ -70,8 +70,28 @@ final class InitChatbot {
 	 * @return void
 	 */
 	public function render() {
+
+		$css_variables = '';
+
+		$admin_settings = $this->core->admin_settings_controller->get_items();
+
+		if ( ! isset( $admin_settings ) || ! is_object( $admin_settings ) ) {
+			return;
+		}
+
+		if ( is_object( $admin_settings->customizations ) && isset( $admin_settings->customizations->backgroundColor ) ) {
+			$css_variables = '--bg-color: ' . $admin_settings->customizations->backgroundColor . ';';
+		}
+
+		if ( is_object( $admin_settings->customizations ) && isset( $admin_settings->customizations->textColor ) ) {
+			$css_variables .= '--text-color: ' . $admin_settings->customizations->textColor . ';';
+		}
+
+		if ( is_object( $admin_settings->customizations ) && isset( $admin_settings->customizations->linkColor ) ) {
+			$css_variables .= '--link-color: ' . $admin_settings->customizations->linkColor . ';';
+		}
 		?>
-		<div id="omnipress-ai-chatbot">omnipress ai chat bot</div>
+		<div style="<?php echo esc_attr( $css_variables ); ?>" id="omnipress-ai-chatbot">omnipress ai chat bot</div>
 		<?php
 	}
 }

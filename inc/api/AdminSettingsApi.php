@@ -74,7 +74,6 @@ final class AdminSettingApi extends RestApi {
 	 */
 	public function update_items( \WP_REST_Request $request ) {
 		$data = $request->get_body();
-		error_log( 'data ==>' . print_r( $data, true ) );
 		$data = $this->controller->update_items( json_decode( $data ) );
 
 		if ( false === $data ) {

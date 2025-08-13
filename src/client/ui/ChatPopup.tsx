@@ -1,7 +1,8 @@
 import { chatApi } from '@/src/api/chatApi';
 import { Textarea } from '@/src/components/ui/textarea';
-import { Bot, Lock, Search, Send, Sparkles, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Bot, Maximize2, Minimize2, Send, Sparkles, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import Markdown from 'react-markdown';
 
 interface Message {
 	content: string;
@@ -13,6 +14,8 @@ const ChatPopup = () => {
 	const [ messages, setMessages ] = useState< Message[] >( [] );
 	const [ inputValue, setInputValue ] = useState( '' );
 	const [ isLoading, setIsLoading ] = useState( false );
+	const messagesEndRef = useRef< HTMLDivElement >( null );
+	const [ isMaximized, setIsMaximized ] = useState( false );
 
 	const handleSend = async () => {
 		if ( inputValue.trim() && ! isLoading ) {
@@ -20,7 +23,10 @@ const ChatPopup = () => {
 				setIsLoading( true );
 				const userMessage = inputValue;
 				setInputValue( '' );
-				setMessages( [...messages, { content: userMessage, role: 'user' } ] );
+				setMessages( [
+					...messages,
+					{ content: userMessage, role: 'user' },
+				] );
 
 				const response = await chatApi.chat( {
 					messages: messages,
@@ -30,6 +36,11 @@ const ChatPopup = () => {
 
 				if ( response.success && response.data?.messages ) {
 					setMessages( response.data.messages );
+				}
+				if ( messagesEndRef.current ) {
+					messagesEndRef.current.scrollIntoView( {
+						behavior: 'smooth',
+					} );
 				}
 			} catch ( error ) {
 				console.log( error );
@@ -65,32 +76,57 @@ const ChatPopup = () => {
 	return (
 		<div style={ styles.container }>
 			{ isOpen ? (
-				<div style={ styles.chatPopup }>
+				<div
+					style={ {
+						...styles.chatPopup,
+						width: isMaximized ? '700px' : '350px',
+						maxWidth: '100vw',
+					} }
+				>
 					<div style={ styles.header }>
 						<div style={ styles.headerContent }>
 							<div style={ styles.logo }>
-								<Bot size={ 18 } color="white" />
+								<Bot
+									size={ 18 }
+									color="var(--text-color, white)"
+								/>
 								<span style={ styles.logoText }>
 									AI Assistant
 								</span>
 								<div style={ styles.statusDot }></div>
 							</div>
-							<div style={ styles.headerActions }>
-								<button style={ styles.headerButton }>
-									<Search size={ 14 } color="white" />
-								</button>
-								<button style={ styles.headerButton }>
-									<Lock size={ 14 } color="white" />
-								</button>
-							</div>
+
+							<button
+								style={ styles.headerButton }
+								onClick={ () =>
+									setIsMaximized( ! isMaximized )
+								}
+							>
+								{ isMaximized ? (
+									<Minimize2
+										color="var(--text-color, white)"
+										size={ 14 }
+									/>
+								) : (
+									<Maximize2
+										color="var(--text-color, white)"
+										size={ 14 }
+									/>
+								) }
+							</button>
 						</div>
 					</div>
 
 					<div style={ styles.messagesContainer }>
 						{ messages.length > 0 ? (
 							<>
-								{ messages.map( ( message ) => (
+								{ messages.map( ( message, index ) => (
 									<div
+										ref={
+											index === messages.length - 1
+												? messagesEndRef
+												: null
+										}
 										key={ message.content }
 										style={ {
 											...styles.messageWrapper,
@@ -112,7 +148,29 @@ const ChatPopup = () => {
 													: styles.otherMessage ),
 											} }
 										>
-											{ message.content }
+											{ message.role === 'assistant' ? (
+												<Markdown
+													components={ {
+														a: ( {
+															node,
+															...props
+														} ) => (
+															<a
+																{ ...props }
+																style={ {
+																	color: 'var(--link-color, #4F46E5)',
+																} }
+																target="_blank"
+																rel="noopener noreferrer"
+															/>
+														),
+													} }
+												>
+													{ message.content }
+												</Markdown>
+											) : (
+												message.content
+											) }
 										</div>
 										{ message.role === 'user' && (
 											<div style={ styles.avatar }>U</div>
@@ -138,7 +196,7 @@ const ChatPopup = () => {
 									: 'Ask me a qustions about omnipress and everest backup...'
 							}
 							disabled={ isLoading }
-							rows={ 2 }
+							rows={ 4 }
 							value={ inputValue }
 							onChange={ ( e ) =>
 								setInputValue( e.target.value )
@@ -151,6 +209,7 @@ const ChatPopup = () => {
 							style={ {
 								...styles.input,
 								opacity: isLoading ? 0.6 : 1,
+								height: 'auto',
 								cursor: isLoading ? 'not-allowed' : 'text',
 							} }
 						/>
@@ -167,45 +226,50 @@ const ChatPopup = () => {
 										: 'pointer',
 							} }
 						>
-							<Send size={ 16 } color="white" />
+							<Send
+								size={ 16 }
+								color="var(--text-color, white)"
+							/>
 						</button>
 					</div>
 
-					{ /* example questions list */ }
-					<div style={ styles.exampleQuestionsList }>
-						{ [
-							'What is omnipress?',
-							'What can i do with omnipress plugin?',
-							'How to install omnipress plugin?',
-							'Can we migrate website using everest backup?',
-						].map( ( question ) => (
-							<p
-								key={ question }
-								onClick={ () =>
-									! isLoading && setInputValue( question )
-								}
-								style={ {
-									...styles.exampleQuestion,
-									opacity: isLoading ? 0.5 : 1,
-									cursor: isLoading
-										? 'not-allowed'
-										: 'pointer',
-								} }
-							>
-								{ question }
-							</p>
-						) ) }
-					</div>
+					{ /* questions list */ }
+					{ messages.length === 0 && (
+						<div style={ styles.exampleQuestionsList }>
+							{ [
+								'What is omnipress?',
+								'What can i do with omnipress plugin?',
+								'How to install omnipress plugin?',
+								'Can we migrate website using everest backup?',
+							].map( ( question ) => (
+								<p
+									key={ question }
+									onClick={ () =>
+										! isLoading && setInputValue( question )
+									}
+									style={ {
+										...styles.exampleQuestion,
+										opacity: isLoading ? 0.5 : 1,
+										cursor: isLoading
+											? 'not-allowed'
+											: 'pointer',
+									} }
+								>
+									{ question }
+								</p>
+							) ) }
+						</div>
+					) }
 
 					<div style={ styles.bottomActions }>
 						<button style={ styles.actionButton }>
-							<Bot size={ 20 } color="white" />
+							<Bot size={ 20 } color="var(--text-color, white)" />
 						</button>
 						<button
 							onClick={ toggleChat }
 							style={ styles.actionButton }
 						>
-							<X size={ 20 } color="white" />
+							<X size={ 20 } color="var(--text-color, white)" />
 						</button>
 					</div>
 				</div>
@@ -216,8 +280,18 @@ const ChatPopup = () => {
 					className="chatIconButton"
 				>
 					<div style={ styles.buttonInner } className="buttonInner">
-						<span style={ { marginRight: '4px' } }>Ask AI </span>
-						<Sparkles size={ 14 } color="white" />
+						<span
+							style={ {
+								marginRight: '4px',
+								color: 'var(--text-color, white)',
+							} }
+						>
+							Ask AI{ ' ' }
+						</span>
+						<Sparkles
+							size={ 14 }
+							color="var(--text-color, white)"
+						/>
 					</div>
 					<div style={ styles.ripple }></div>
 				</button>
@@ -240,7 +314,8 @@ const styles: Record< string, React.CSSProperties > = {
 		height: '50px',
 		padding: '0',
 		borderRadius: '4px',
-		background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
+		background: 'var(--bg-color, linear-gradient(135deg, #4F46E5, #7C3AED)',
+		color: 'var(--text-color, white)',
 		border: 'none',
 		cursor: 'pointer',
 		display: 'flex',
@@ -255,7 +330,6 @@ const styles: Record< string, React.CSSProperties > = {
 		position: 'fixed',
 		bottom: '0',
 		right: '0',
-		width: '350px',
 		height: '100vh',
 		backgroundColor: 'white',
 		boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
@@ -265,9 +339,9 @@ const styles: Record< string, React.CSSProperties > = {
 		animation: 'slideUp 0.3s ease-out',
 	},
 	header: {
-		background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
+		background: 'var(--bg-color, linear-gradient(135deg, #4F46E5, #7C3AED)',
+		color: 'var(--text-color, white)',
 		padding: '15px 20px',
-		color: 'white',
 	},
 	headerContent: {
 		display: 'flex',
@@ -359,8 +433,8 @@ const styles: Record< string, React.CSSProperties > = {
 		wordWrap: 'break-word',
 	},
 	userMessage: {
-		background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
-		color: 'white',
+		background: 'var(--bg-color, linear-gradient(135deg, #4F46E5, #7C3AED)',
+		color: 'var(--text-color, white)',
 		borderBottomRightRadius: '6px',
 	},
 	otherMessage: {
@@ -381,7 +455,7 @@ const styles: Record< string, React.CSSProperties > = {
 		color: 'white',
 		fontSize: '14px',
 		fontWeight: '600',
-		backgroundColor: '#4F46E5',
+		backgroundColor: 'var(--bg-color,#4F46E5)',
 	},
 	inputContainer: {
 		backgroundColor: 'white',
@@ -410,9 +484,9 @@ const styles: Record< string, React.CSSProperties > = {
 		bottom: '20px',
 		padding: '0',
 		borderRadius: '50%',
-		background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
+		background: 'var(--bg-color, linear-gradient(135deg, #4F46E5, #7C3AED)',
+		color: 'var(--text-color, white)',
 		border: 'none',
-		color: 'white',
 		cursor: 'pointer',
 		display: 'flex',
 		alignItems: 'center',
@@ -421,9 +495,12 @@ const styles: Record< string, React.CSSProperties > = {
 		flexShrink: 0,
 	},
 	bottomActions: {
-		backgroundColor: 'white',
 		padding: '15px 20px',
 		display: 'flex',
+		position: 'absolute',
+		bottom: '0',
+		right: '0',
+		backgroundColor: 'transparent',
 		justifyContent: 'center',
 		gap: '15px',
 		borderTop: '1px solid #E5E5E5',
@@ -433,9 +510,9 @@ const styles: Record< string, React.CSSProperties > = {
 		height: '50px',
 		padding: '0',
 		borderRadius: '50%',
-		background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
+		background: 'var(--bg-color, linear-gradient(135deg, #4F46E5, #7C3AED)',
+		color: 'var(--text-color, white)',
 		border: 'none',
-		color: 'white',
 		cursor: 'pointer',
 		display: 'flex',
 		alignItems: 'center',
@@ -447,6 +524,7 @@ const styles: Record< string, React.CSSProperties > = {
 		flexDirection: 'column',
 		gap: '10px',
 		padding: '10px',
+		alignItems: 'flex-start',
 	},
 	exampleQuestion: {
 		fontSize: '14px',
@@ -482,7 +560,7 @@ const styles: Record< string, React.CSSProperties > = {
 		width: '8px',
 		height: '8px',
 		borderRadius: '50%',
-		backgroundColor: '#4F46E5',
+		backgroundColor: 'var(--bg-color,#4F46E5)',
 		animation: 'loading-bounce 1.4s ease-in-out infinite both',
 	},
 };
