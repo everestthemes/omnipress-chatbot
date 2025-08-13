@@ -10,11 +10,12 @@
 		"url": "git+https://github.com/everestthemes/omnipress-ai-chatbot.git"
 	},
 	"scripts": {
-		"build": "wp-scripts build src/admin/index.js src/client/chatbot.js --output-path=build/js",
+		"build": "wp-scripts build src/admin/index.js src/client/chatbot.js --output-path=build/js && pnpm run build:css",
 		"start": "wp-scripts start src/admin/index.js src/client/chatbot.js --output-path=build/js",
 		"format": "wp-scripts format ./src",
 		"tailwind:watch": "npx @tailwindcss/cli -i ./src/index.css -o ./build/css/global.css --watch",
-		"build:css": "npx @tailwindcss/cli -i ./src/index.css -o ./build/css/global.css --minify"
+		"build:css": "npx @tailwindcss/cli -i ./src/index.css -o ./build/css/global.css --minify",
+		"plugin-zip": "wp-scripts plugin-zip"
 	},
 	"devDependencies": {
 		"@types/react": "^19.1.9",
