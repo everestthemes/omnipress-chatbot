@@ -105,16 +105,6 @@ export const DashboardPage = () => {
 	return (
 		<>
 			<Toaster richColors />
-
-			{ /* <Tabs defaultValue="account" className="w-[400px]">
-				<TabsList>
-					{ tabs.map( ( tab ) => (
-						<TabsTrigger key={ tab.value } value={ tab.value }>
-							{ tab.label }
-						</TabsTrigger>
-					) ) }
-				</TabsList>
-				<TabsContent value="general"> */ }
 			<Card>
 				<CardHeader>
 					<h3 className="text-xl font-bold !text-foreground">

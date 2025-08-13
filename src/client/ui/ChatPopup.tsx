@@ -262,9 +262,6 @@ const ChatPopup = () => {
 					) }
 
 					<div style={ styles.bottomActions }>
-						<button style={ styles.actionButton }>
-							<Bot size={ 20 } color="var(--text-color, white)" />
-						</button>
 						<button
 							onClick={ toggleChat }
 							style={ styles.actionButton }

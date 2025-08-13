@@ -79,15 +79,15 @@ final class InitChatbot {
 			return;
 		}
 
-		if ( is_object( $admin_settings->customizations ) && isset( $admin_settings->customizations->backgroundColor ) ) {
+		if ( is_object( $admin_settings->customizations ) && ! empty( $admin_settings->customizations->backgroundColor ) ) {
 			$css_variables = '--bg-color: ' . $admin_settings->customizations->backgroundColor . ';';
 		}
 
-		if ( is_object( $admin_settings->customizations ) && isset( $admin_settings->customizations->textColor ) ) {
+		if ( is_object( $admin_settings->customizations ) && ! empty( $admin_settings->customizations->textColor ) ) {
 			$css_variables .= '--text-color: ' . $admin_settings->customizations->textColor . ';';
 		}
 
-		if ( is_object( $admin_settings->customizations ) && isset( $admin_settings->customizations->linkColor ) ) {
+		if ( is_object( $admin_settings->customizations ) && ! empty( $admin_settings->customizations->linkColor ) ) {
 			$css_variables .= '--link-color: ' . $admin_settings->customizations->linkColor . ';';
 		}
 		?>
