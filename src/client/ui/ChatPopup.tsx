@@ -96,24 +96,40 @@ const ChatPopup = () => {
 								<div style={ styles.statusDot }></div>
 							</div>
 
-							<button
-								style={ styles.headerButton }
-								onClick={ () =>
-									setIsMaximized( ! isMaximized )
-								}
+							<div
+								style={ {
+									display: 'flex',
+									gap: '4px',
+								} }
 							>
-								{ isMaximized ? (
-									<Minimize2
+								<button
+									style={ styles.headerButton }
+									onClick={ () =>
+										setIsMaximized( ! isMaximized )
+									}
+								>
+									{ isMaximized ? (
+										<Minimize2
+											color="var(--text-color, white)"
+											size={ 14 }
+										/>
+									) : (
+										<Maximize2
+											color="var(--text-color, white)"
+											size={ 14 }
+										/>
+									) }
+								</button>
+								<button
+									style={ styles.headerButton }
+									onClick={ toggleChat }
+								>
+									<X
+										size={ 20 }
 										color="var(--text-color, white)"
-										size={ 14 }
 									/>
-								) : (
-									<Maximize2
-										color="var(--text-color, white)"
-										size={ 14 }
-									/>
-								) }
-							</button>
+								</button>
+							</div>
 						</div>
 					</div>
 
@@ -260,15 +276,6 @@ const ChatPopup = () => {
 							) ) }
 						</div>
 					) }
-
-					<div style={ styles.bottomActions }>
-						<button
-							onClick={ toggleChat }
-							style={ styles.actionButton }
-						>
-							<X size={ 20 } color="var(--text-color, white)" />
-						</button>
-					</div>
 				</div>
 			) : (
 				<button
@@ -393,8 +400,8 @@ const styles: Record< string, React.CSSProperties > = {
 		background: 'rgba(255, 255, 255, 0.2)',
 		border: 'none',
 		borderRadius: '8px',
-		width: '32px',
-		height: '32px',
+		width: '17px',
+		height: '20px',
 		cursor: 'pointer',
 		display: 'flex',
 		alignItems: 'center',

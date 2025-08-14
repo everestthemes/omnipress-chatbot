@@ -15,7 +15,8 @@
 		"format": "wp-scripts format ./src",
 		"tailwind:watch": "npx @tailwindcss/cli -i ./src/index.css -o ./build/css/global.css --watch",
 		"build:css": "npx @tailwindcss/cli -i ./src/index.css -o ./build/css/global.css --minify",
-		"plugin-zip": "wp-scripts plugin-zip"
+		"plugin-zip": "wp-scripts plugin-zip",
+		"push": "bash ./scripts/bash/push.sh"
 	},
 	"devDependencies": {
 		"@types/react": "^19.1.9",
