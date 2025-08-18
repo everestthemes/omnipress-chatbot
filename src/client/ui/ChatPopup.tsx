@@ -3,6 +3,7 @@ import { Textarea } from '@/src/components/ui/textarea';
 import { Bot, Maximize2, Minimize2, Send, Sparkles, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
+import { Toaster } from 'sonner';
 
 interface Message {
 	content: string;
@@ -34,9 +35,13 @@ const ChatPopup = () => {
 					client: 'chatbot',
 				} );
 
+				console.log( response, 'response')
+
 				if ( response.success && response.data?.messages ) {
 					setMessages( response.data.messages );
 				}
+
+
 				if ( messagesEndRef.current ) {
 					messagesEndRef.current.scrollIntoView( {
 						behavior: 'smooth',
@@ -73,8 +78,10 @@ const ChatPopup = () => {
 		</div>
 	);
 
+
 	return (
 		<div style={ styles.container }>
+		<Toaster richColors position="top-right" />
 			{ isOpen ? (
 				<div
 					style={ {

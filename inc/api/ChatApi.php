@@ -55,8 +55,8 @@ final class ChatApi extends RestApi {
 
 		$data = $this->controller->update_items( json_decode( $data ) );
 
-		if ( false === $data || false === $data['success'] ) {
-			return $this->send_error_response( array( 'message' => $data['messages'] ?? 'Failed to update settings' ), 500 );
+		if ( false === $data || ! $data['success'] ) {
+			return $this->send_error_response( $data['messages'] ?? 'Failed to update settings', $data['status_code'] ?? 500 );
 		}
 
 		return $this->send_success_response( $data['data'] );

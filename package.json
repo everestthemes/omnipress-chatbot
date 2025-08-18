@@ -2,6 +2,7 @@
 	"name": "omnipress-ai-chatbot",
 	"version": "0.1.0",
 	"description": "OmniPress AI Chatbot",
+	"packagesBranch": "omnipress-ai-chatbot",
 	"main": "index.js",
 	"license": "MIT",
 	"author": "n1technology",

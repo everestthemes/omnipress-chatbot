@@ -1,6 +1,8 @@
 <?php
 namespace Omnipress\AIChatbot\Services;
 
+use WP_REST_Response;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -53,6 +55,9 @@ class ChatServices extends AbstractService {
 		return true;
 	}
 
+	public function validate_ai_reponse( WP_REST_Response $response ) {
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -91,8 +96,17 @@ class ChatServices extends AbstractService {
 
 		if ( is_wp_error( $res ) ) {
 			return array(
-				'success'  => false,
-				'messages' => 'Failed to send request',
+				'success'     => false,
+				'messages'    => 'Failed to send request',
+				'status_code' => $res->get_error_code(),
+			);
+		}
+
+		if ( 200 !== $res['response']['code'] ) {
+			return array(
+				'success'     => false,
+				'messages'    => json_decode( $res['body'], true )['message'],
+				'status_code' => $res['response']['code'],
 			);
 		}
 
