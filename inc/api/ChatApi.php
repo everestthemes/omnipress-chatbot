@@ -55,10 +55,12 @@ final class ChatApi extends RestApi {
 	public function update_items( \WP_REST_Request $request ) {
 		$data = $request->get_body();
 
+		$settings = get_option( 'omnipress_ai_chatbot_settings', array() );
+
 		$client = array(
-			'slug'  => 'n1technology',
-			'name'  => 'n1 technology, omnipress and everest backup',
-			'email' => 'info@ominpress.com',
+			'slug'  => $settings->client->slug ?? '',
+			'name'  => $settings->client->name ?? '',
+			'email' => $settings->client->email ?? '',
 		);
 
 		$data         = json_decode( $data );

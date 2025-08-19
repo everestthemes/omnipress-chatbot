@@ -32,6 +32,10 @@ const tabs = [
 		label: 'Customizations',
 		value: 'customizations',
 	},
+	{
+		label: 'Client',
+		value: 'client',
+	},
 ];
 
 interface ChatbotSettings {
@@ -42,6 +46,11 @@ interface ChatbotSettings {
 		textColor: string;
 		linkColor: string;
 		iconPosition: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+	};
+	client: {
+		name: string;
+		email: string;
+		slug: string;
 	};
 }
 
@@ -323,6 +332,59 @@ export const DashboardPage = () => {
 										</div>
 									</>
 								) }
+							</TabsContent>
+							<TabsContent
+								className="p-4 space-y-3"
+								value="client"
+							>
+								<h3 className="text-xl font-bold !text-foreground">
+									Client Information
+								</h3>
+								<div className="space-y-2">
+									<Label htmlFor="clientName">
+										Client Name
+									</Label>
+									<Input
+										id="clientName"
+										placeholder="Enter client name"
+										value={ chatbotSettings?.client?.name }
+										onChange={ ( e ) =>
+											onChangeHandler( 'client.name' )(
+												e.target.value
+											)
+										}
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="clientEmail">
+										Client Email
+									</Label>
+									<Input
+										id="clientEmail"
+										placeholder="Enter client email"
+										value={ chatbotSettings?.client?.email }
+										onChange={ ( e ) =>
+											onChangeHandler( 'client.email' )(
+												e.target.value
+											)
+										}
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="clientSlug">
+										Client Slug
+									</Label>
+									<Input
+										id="clientSlug"
+										placeholder="Enter client slug"
+										value={ chatbotSettings?.client?.slug }
+										onChange={ ( e ) =>
+											onChangeHandler( 'client.slug' )(
+												e.target.value
+											)
+										}
+									/>
+								</div>
 							</TabsContent>
 						</Tabs>
 					) }

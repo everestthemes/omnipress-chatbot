@@ -31,7 +31,23 @@ $core = new Core();
  * @return void
  */
 function omnipress_ai_chatbot_activate() {
-	// TODO: all the activation related code goes here.
+	$default_settings = array(
+		'apiKey'          => '',
+		'isEnableChatBot' => false,
+		'customizations'  => array(
+			'backgroundColor' => '#4F46E5',
+			'textColor'       => '#FFFFFF',
+			'linkColor'       => '#FFFFFF',
+			'iconPosition'    => 'bottom-right',
+		),
+		'client'          => array(
+			'name'  => 'n1 technology',
+			'email' => 'info@n1technology.com',
+			'slug'  => 'n1technology',
+		),
+	);
+
+	add_option( 'omnipress_ai_chatbot_settings', $default_settings );
 }
 
 /**
@@ -40,7 +56,7 @@ function omnipress_ai_chatbot_activate() {
  * @return void
  */
 function omnipress_ai_chatbot_deactivate() {
-	// TODO: all the deactivation related code goes here.
+	delete_option( 'omnipress_ai_chatbot_settings' );
 }
 
 register_activation_hook( __FILE__, 'omnipress_ai_chatbot_activate' );
