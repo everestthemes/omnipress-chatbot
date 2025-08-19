@@ -17,6 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class ChatApi extends RestApi {
 	const REST_BASE = 'chat';
+
 	/**
 	 * Register routes function
 	 *
@@ -47,13 +48,23 @@ final class ChatApi extends RestApi {
 		return $this->send_success_response( $data );
 	}
 
+
 	/**
 	 * {@inheritdoc}
 	 */
 	public function update_items( \WP_REST_Request $request ) {
 		$data = $request->get_body();
 
-		$data = $this->controller->update_items( json_decode( $data ) );
+		$client = array(
+			'slug'  => 'n1technology',
+			'name'  => 'n1 technology, omnipress and everest backup',
+			'email' => 'info@ominpress.com',
+		);
+
+		$data         = json_decode( $data );
+		$data->client = $client;
+
+		$data = $this->controller->update_items( $data );
 
 		if ( false === $data || ! $data['success'] ) {
 			return $this->send_error_response( $data['messages'] ?? 'Failed to update settings', $data['status_code'] ?? 500 );
@@ -86,6 +97,13 @@ final class ChatApi extends RestApi {
 				}
 			}
 		}
+
+		// client information slug, name of the company and email is required .
+		$data['client'] = array(
+			'slug'  => 'n1technology',
+			'name'  => 'n1 technology, omnipress and everest backup',
+			'email' => 'info@n1technology.com',
+		);
 
 		return $this->send_success_response( $data );
 	}

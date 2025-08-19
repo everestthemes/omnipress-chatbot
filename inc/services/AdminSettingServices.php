@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * AdminSettingServices class.
  *
- * @author Asishwor
+ * @author omnipressteam
  * @copyright (c) 2025
  * @since 0.1.0
  */

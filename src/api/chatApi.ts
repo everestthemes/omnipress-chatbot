@@ -11,9 +11,6 @@ export const chatApi = {
 			});
 
 
-			console.log(res, 'response');
-			toast.success('Chat sent successfully');
-
 			return res;
 		} catch (error) {
 			console.log(error, 'error');

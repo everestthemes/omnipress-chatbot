@@ -81,7 +81,8 @@ const ChatPopup = () => {
 
 	return (
 		<div style={ styles.container }>
-		<Toaster richColors position="top-right" />
+			<Toaster richColors position="top-right" />
+
 			{ isOpen ? (
 				<div
 					style={ {

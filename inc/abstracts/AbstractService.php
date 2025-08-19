@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class AbstractService
  *
- * @author Ishwor Khadka <asishwor@gmail.com>
+ * @author Ishwor Khadka <omnipressteam@gmail.com>
  * @package app\core
  */
 

@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * All the settings options handler like any settings related chatbot related theme customization , api key
  * Role show hide and more.
  *
- * @author Asishwor
+ * @author omnipressteam
  * @copyright (c) 2025
  */
 final class AdminSettingApi extends RestApi {

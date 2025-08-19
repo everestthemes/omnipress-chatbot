@@ -11,11 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+
 /**
  * RestApi class.
  *
- * @author Asishwor
+ * @author omnipressteam
  * @copyright (c) 2025
+ *
  * @since 0.1.0
  */
 class RestApi extends WP_REST_Controller {
@@ -72,8 +74,9 @@ class RestApi extends WP_REST_Controller {
 			array(
 				'success' => true,
 				'data'    => $data,
-			)
+			),
 		);
+
 		$response->set_status( $status );
 		return $response;
 	}
