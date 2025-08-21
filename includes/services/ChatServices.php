@@ -1,4 +1,5 @@
 <?php
+
 namespace Omnipress\AIChatbot\Services;
 
 use WP_REST_Response;
@@ -18,7 +19,8 @@ use Omnipress\AIChatbot\Abstracts\AbstractService;
  * @since 0.1.0
  */
 class ChatServices extends AbstractService {
-	const REMOTE_URL = 'http://localhost:3000/api';
+
+	const REMOTE_URL = 'https://omnipressai.com/api';
 
 	/**
 	 * {@inheritDoc}

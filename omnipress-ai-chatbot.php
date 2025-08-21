@@ -1,6 +1,7 @@
 <?php
 
 use Omnipress\AIChatbot\Core;
+
 /**
  * Plugin Name: Omnipress AI Chatbot
  * Plugin URI: https://github.com/everestthemes/omnipress-ai-chatbot
@@ -21,7 +22,7 @@ function omnipress_ai_chatbot_define_constants() {
 
 omnipress_ai_chatbot_define_constants();
 
-require_once __DIR__ . '/inc/require.php';
+require_once __DIR__ . '/includes/require.php';
 
 $core = new Core();
 

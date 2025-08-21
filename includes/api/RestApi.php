@@ -89,7 +89,7 @@ class RestApi extends WP_REST_Controller {
 	 *
 	 * @return \WP_REST_Response
 	 */
-	public function send_error_response( string $message, int $status = 500 ) {
+	public function send_error_response( $message, $status = 500 ) {
 		$response = wp_send_json_error(
 			array(
 				'message' => $message,

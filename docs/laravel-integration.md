@@ -263,7 +263,7 @@ use Illuminate\Support\Facades\Http;
 
 class ChatbotController extends Controller
 {
-    public const API_URL = 'http://localhost:3000/api/generate/chatbot';
+    public const API_URL = 'https://omnipressai.com/api/generate/chatbot';
 
     public function chat(Request $request)
     {

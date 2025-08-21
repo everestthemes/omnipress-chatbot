@@ -1,12 +1,11 @@
 <?php
 namespace Omnipress\AIChatbot\Api;
 
-use WP_REST_Server;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use WP_REST_Server;
 
 /**
  * All the settings options handler like any settings related chatbot related theme customization , api key
@@ -42,7 +41,7 @@ final class ChatApi extends RestApi {
 		$data = $this->controller->get_items();
 
 		if ( is_wp_error( $data ) ) {
-			return $this->send_error_response( array( 'message' => $data->get_error_message() ), $data->get_error_code() ?? 500 );
+			return $this->send_error_response( $data->get_error_message(), $data->get_error_code() ?? 500 );
 		}
 
 		return $this->send_success_response( $data );
@@ -83,13 +82,13 @@ final class ChatApi extends RestApi {
 		$item_value = $request->get_param( 'data' );
 
 		if ( empty( $id ) ) {
-			return $this->send_error_response( array( 'message' => 'Invalid id' ), 400 );
+			return $this->send_error_response( 'Invalid id', 400 );
 		}
 
 		$data = $this->controller->update_item( $id, $item_value );
 
 		if ( is_wp_error( $data ) ) {
-			return $this->send_error_response( array( 'message' => $data->get_error_message() ), $data->get_error_code() ?? 500 );
+			return $this->send_error_response( $data->get_error_message(), $data->get_error_code() ?? 500 );
 		}
 
 		if ( ! isset( $data[ $id ] ) && is_array( $data ) ) {

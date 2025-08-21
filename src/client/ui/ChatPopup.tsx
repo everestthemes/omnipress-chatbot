@@ -214,28 +214,23 @@ const ChatPopup = () => {
           </div>
 
           {/* questions list */}
-          {messages.length === 0 && (
-            <div style={styles.exampleQuestionsList}>
-              {[
-                "What is omnipress?",
-                "What can i do with omnipress plugin?",
-                "How to install omnipress plugin?",
-                "Can we migrate website using everest backup?",
-              ].map((question) => (
-                <p
-                  key={question}
-                  onClick={() => !isLoading && setInputValue(question)}
-                  style={{
-                    ...styles.exampleQuestion,
-                    opacity: isLoading ? 0.5 : 1,
-                    cursor: isLoading ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {question}
-                </p>
-              ))}
-            </div>
-          )}
+
+          <p
+            style={{
+              padding: "12px",
+              textAlign: "end",
+              fontSize: "12px",
+            }}
+          >
+            Powered by{" "}
+            <a
+              style={{ color: "var(--bg-color, #4F46E5)" }}
+              href="https://omnipressai.com"
+              target="_blank"
+            >
+              Omnipress AI
+            </a>{" "}
+          </p>
         </div>
       ) : (
         <button
@@ -250,7 +245,7 @@ const ChatPopup = () => {
                 color: "var(--text-color, white)",
               }}
             >
-              Ask AI{" "}
+              Ask AI
             </span>
             <Sparkles size={14} color="var(--text-color, white)" />
           </div>
@@ -426,6 +421,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: "10px",
     borderTop: "1px solid #E5E5E5",
+    paddingBottom: "0",
   },
   input: {
     flex: 1,
