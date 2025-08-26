@@ -1,4 +1,5 @@
 <?php
+
 namespace Omnipress\AIChatbot\Api;
 
 if ( ! defined( 'ABSPATH' ) ) {
