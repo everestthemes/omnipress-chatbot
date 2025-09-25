@@ -32,8 +32,6 @@ const ChatPopup = () => {
           client: "chatbot",
         });
 
-        console.log(response, "response");
-
         if (response.success && response.data?.messages) {
           setMessages(response.data.messages);
         }
@@ -44,7 +42,7 @@ const ChatPopup = () => {
           });
         }
       } catch (error) {
-        console.log(error);
+        console.error(error);
       } finally {
         setIsLoading(false);
       }
