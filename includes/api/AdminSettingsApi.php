@@ -1,7 +1,6 @@
 <?php
 namespace Omnipress\AIChatbot\Api;
 
-use Omnipress\AIChatbot\Loader;
 use WP_REST_Server;
 
 if ( ! defined( 'ABSPATH' ) ) {

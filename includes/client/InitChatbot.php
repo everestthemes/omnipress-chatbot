@@ -50,7 +50,8 @@ final class InitChatbot {
 	 */
 	public function load_assets() {
 		$assets = require_once OMNIPRESS_AI_CHATBOT_DIR . 'build/js/chatbot.asset.php';
-		wp_enqueue_script( 'omnipress-ai-chatbot', OMNIPRESS_AI_CHATBOT_URL . '/build/js/chatbot.js', $assets['dependencies'], $assets['version'], true );
+
+		wp_enqueue_script( 'omnipress-ai-chatbot', OMNIPRESS_AI_CHATBOT_URL . '/build/js/chatbot.js', $assets['dependencies'] ?? array(), $assets['version'] ?? '1.0.0', true );
 	}
 	/**
 	 * Check if chatbot can be rendered.

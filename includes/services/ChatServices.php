@@ -21,6 +21,7 @@ use Omnipress\AIChatbot\Abstracts\AbstractService;
 class ChatServices extends AbstractService {
 
 	const REMOTE_URL = 'https://omnipressai.com/api';
+	// const REMOTE_URL = 'http://localhost:3000/api';
 
 	/**
 	 * {@inheritDoc}
