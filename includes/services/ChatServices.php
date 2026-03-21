@@ -1,5 +1,4 @@
 <?php
-
 namespace Omnipress\AIChatbot\Services;
 
 use WP_REST_Response;
@@ -7,7 +6,6 @@ use WP_REST_Response;
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-
 
 use Omnipress\AIChatbot\Abstracts\AbstractService;
 
@@ -20,8 +18,7 @@ use Omnipress\AIChatbot\Abstracts\AbstractService;
  */
 class ChatServices extends AbstractService {
 
-	const REMOTE_URL = 'https://omnipressai.com/api';
-	// const REMOTE_URL = 'http://localhost:3000/api';
+	const REMOTE_URL = 'https://omnipressai.com/api/';
 
 	/**
 	 * {@inheritDoc}
@@ -84,11 +81,32 @@ class ChatServices extends AbstractService {
 			);
 		}
 
+		$query = '';
+		if ( isset( $data->question ) ) {
+			$query = $data->question;
+		} elseif ( isset( $data->messages ) && is_array( $data->messages ) && ! empty( $data->messages ) ) {
+			$last_message = end( $data->messages );
+			if ( is_object( $last_message ) && isset( $last_message->content ) ) {
+				$query = $last_message->content;
+			} elseif ( is_array( $last_message ) && isset( $last_message['content'] ) ) {
+				$query = $last_message['content'];
+			}
+		}
+
+		$session_id = isset( $data->sessionId ) ? $data->sessionId : ( isset( $data->session_id ) ? $data->session_id : '' );
+
+		$payload = array(
+			'query'          => $query,
+			'sessionId'      => $session_id,
+			'collectionName' => $data->client->collection_name,
+			'messages'       => isset( $data->messages ) && is_array( $data->messages ) ? $data->messages : array(),
+		);
+
 		$res = wp_remote_post(
-			self::REMOTE_URL . '/generate/chatbot',
+			self::REMOTE_URL . 'knowledge-base/query',
 			array(
 				'method'  => 'POST',
-				'body'    => wp_json_encode( $data ),
+				'body'    => wp_json_encode( $payload ),
 				'timeout' => '30',
 				'headers' => array(
 					'Content-Type'  => 'application/json',
@@ -106,9 +124,11 @@ class ChatServices extends AbstractService {
 		}
 
 		if ( 200 !== $res['response']['code'] ) {
+			$response_body = json_decode( $res['body'], true );
+			$error_message = isset( $response_body['error'] ) ? $response_body['error'] : ( isset( $response_body['message'] ) ? $response_body['message'] : 'Unknown error' );
 			return array(
 				'success'     => false,
-				'messages'    => json_decode( $res['body'], true )['message'],
+				'messages'    => $error_message,
 				'status_code' => $res['response']['code'],
 			);
 		}

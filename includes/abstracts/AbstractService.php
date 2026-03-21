@@ -58,7 +58,7 @@ abstract class AbstractService {
 	 *
 	 * @return mixed
 	 */
-	abstract public function update_items( $data );
+	abstract public function update_items( mixed $data );
 
 	/**
 	 * Delete item

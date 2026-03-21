@@ -65,7 +65,26 @@ final class AdminSettingApi extends RestApi {
 			return $this->send_error_response( array( 'message' => $data->get_error_message() ), $data->get_error_code() ?? 500 );
 		}
 
+		// Filter sensitive data for non-admins
+		if ( ! current_user_can( 'manage_options' ) ) {
+			if ( is_object( $data ) ) {
+				unset( $data->apiKey );
+			} elseif ( is_array( $data ) ) {
+				unset( $data['apiKey'] );
+			}
+		}
+
 		return $this->send_success_response( $data );
+	}
+
+	/**
+	 * Permissions check for getting items.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return bool
+	 */
+	public function get_items_permissions_check( $request ) {
+		return true;
 	}
 
 	/**

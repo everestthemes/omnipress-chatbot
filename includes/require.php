@@ -15,6 +15,8 @@ require_once OMNIPRESS_AI_CHATBOT_DIR . '/includes/abstracts/AbstractController.
 // Services.
 require_once OMNIPRESS_AI_CHATBOT_DIR . '/includes/services/AdminSettingServices.php';
 require_once OMNIPRESS_AI_CHATBOT_DIR . '/includes/services/ChatServices.php';
+require_once OMNIPRESS_AI_CHATBOT_DIR . '/includes/services/LeadServices.php';
+require_once OMNIPRESS_AI_CHATBOT_DIR . '/includes/services/ChatHistoryServices.php';
 
 // Admin.
 require_once OMNIPRESS_AI_CHATBOT_DIR . '/includes/admin/admin.php';

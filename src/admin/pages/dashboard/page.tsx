@@ -18,7 +18,7 @@ import {
 } from "@/src/components/ui/tabs";
 import { TooltipContent, TooltipTrigger } from "@/src/components/ui/tooltip";
 import { Tooltip } from "@radix-ui/react-tooltip";
-import { FileQuestionMark } from "lucide-react";
+import { FileQuestionMark, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 
@@ -29,29 +29,33 @@ const tabs = [
     value: "general",
   },
   {
-    label: "Customizations",
-    value: "customizations",
-  },
-  {
     label: "Client",
     value: "client",
+  },
+  {
+    label: "Example Questions",
+    value: "example_questions",
   },
 ];
 
 interface ChatbotSettings {
-  apiKey: string;
-  isEnableChatBot: boolean;
-  customizations: {
+  apiKey?: string;
+  isEnableChatBot?: boolean;
+  isEnableLeadCapture?: boolean;
+  customizations?: {
     backgroundColor: string;
     textColor: string;
     linkColor: string;
+    logoUrl: string;
+    titleText: string;
     iconPosition: "top-left" | "top-right" | "bottom-left" | "bottom-right";
   };
-  client: {
+  client?: {
     name: string;
     email: string;
-    slug: string;
+    collection_name: string;
   };
+  exampleQuestions?: string[];
 }
 
 export const DashboardPage = () => {
@@ -170,6 +174,7 @@ export const DashboardPage = () => {
                     onChange={(e) => onChangeHandler("apiKey")(e.target.value)}
                   />
                 </div>
+
                 <div className="space-y-2 flex gap-4 items-center mt-3">
                   <Switch
                     id="isEnableChatBot"
@@ -194,87 +199,80 @@ export const DashboardPage = () => {
                     </TooltipContent>
                   </Tooltip>
                 </div>
-              </TabsContent>
 
-              <TabsContent className="p-4 space-y-3" value="customizations">
-                <h3 className="text-xl font-bold !text-foreground">
-                  Customizations
-                </h3>
-
-                {loading ? (
-                  <div className="flex items-center space-x-4 p-4">
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-[250px]" />
-                      <Skeleton className="h-4 w-[200px]" />
-                    </div>
+                <div className="flex items-center justify-between p-4 bg-muted rounded-lg border mt-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="isEnableLeadCapture">Enable Lead Capture</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Ask user details for first time chat
+                    </p>
                   </div>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="gradient">Primary gradient</Label>
-                      <Input
-                        id="gradient"
-                        value={chatbotSettings?.customizations?.backgroundColor}
-                        onChange={(e) =>
-                          onChangeHandler("customizations.backgroundColor")(
-                            e.target.value
-                          )
-                        }
-                        className="max-w-1/2 min-h-8"
-                        placeholder="Enter your primary theme color"
-                      />
-                    </div>
+                  <Switch
+                    id="isEnableLeadCapture"
+                    checked={chatbotSettings?.isEnableLeadCapture ?? false}
+                    onCheckedChange={(val) =>
+                      onChangeHandler("isEnableLeadCapture")(val)
+                    }
+                  />
+                </div>
+                <div className="space-y-2 mb-4">
+                  <Label htmlFor="titleText">Bot Title Text</Label>
+                  <Input
+                    id="titleText"
+                    value={chatbotSettings?.customizations?.titleText}
+                    onChange={(e) =>
+                      onChangeHandler("customizations.titleText")(
+                        e.target.value
+                      )
+                    }
+                    placeholder="e.g. AI Assistant"
+                  />
+                </div>
 
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="gradient">Text Color</Label>
-                      <Input
-                        id="gradient"
-                        value={chatbotSettings?.customizations?.textColor}
-                        onChange={(e) =>
-                          onChangeHandler("customizations.textColor")(
-                            e.target.value
-                          )
-                        }
-                        className="max-w-1/2 min-h-8"
-                        placeholder="Enter your primary theme color"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="gradient">Link Color</Label>
-                      <Input
-                        id="gradient"
-                        value={chatbotSettings?.customizations?.linkColor}
-                        onChange={(e) =>
-                          onChangeHandler("customizations.linkColor")(
-                            e.target.value
-                          )
-                        }
-                        className="max-w-1/2 min-h-8"
-                        placeholder="Enter your primary theme color"
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="gradient">Icon Position</Label>
-                      <select
-                        value={chatbotSettings?.customizations?.iconPosition}
-                        onChange={(e) =>
-                          onChangeHandler("customizations.iconPosition")(
-                            e.target.value
-                          )
-                        }
+                <div className="space-y-2 mb-4">
+                  <Label>Bot Icon / Logo</Label>
+                  <div className="flex items-center gap-4">
+                    {chatbotSettings?.customizations?.logoUrl && (
+                      <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-200">
+                        <img
+                          src={chatbotSettings.customizations.logoUrl}
+                          alt="Bot Logo"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const frame = (window as any).wp.media({
+                          title: 'Select or Upload Bot Logo',
+                          button: { text: 'Use this logo' },
+                          multiple: false
+                        });
+                        frame.on('select', () => {
+                          const attachment = frame.state().get('selection').first().toJSON();
+                          onChangeHandler("customizations.logoUrl")(attachment.url);
+                        });
+                        frame.open();
+                      }}
+                    >
+                      {chatbotSettings?.customizations?.logoUrl ? "Change Logo" : "Upload Logo"}
+                    </Button>
+                    {chatbotSettings?.customizations?.logoUrl && (
+                      <Button
+                        variant="ghost"
+                        className="text-red-500"
+                        onClick={() => onChangeHandler("customizations.logoUrl")("")}
                       >
-                        <option value="top-left">Top Left</option>
-                        <option value="top-right">Top Right</option>
-                        <option value="bottom-left">Bottom Left</option>
-                        <option value="bottom-right">Bottom Right</option>
-                      </select>
-                    </div>
-                  </>
-                )}
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </TabsContent>
+
               <TabsContent className="p-4 space-y-3" value="client">
-                <h3 className="text-xl font-bold !text-foreground">
+                <h3 className="text-xl font-bold text-foreground!">
                   Client Information
                 </h3>
                 <div className="space-y-2">
@@ -300,16 +298,80 @@ export const DashboardPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="clientSlug">Client Slug</Label>
+                  <Label htmlFor="clientSlug">Collection Name</Label>
                   <Input
                     id="clientSlug"
-                    placeholder="Enter client slug"
-                    value={chatbotSettings?.client?.slug}
+                    placeholder="Enter collection name"
+                    value={chatbotSettings?.client?.collection_name}
                     onChange={(e) =>
-                      onChangeHandler("client.slug")(e.target.value)
+                      onChangeHandler("client.collection_name")(e.target.value)
                     }
                   />
                 </div>
+              </TabsContent>
+
+              <TabsContent className="p-4 space-y-4" value="example_questions">
+                <h3 className="text-xl font-bold !text-foreground">
+                  Example Questions
+                </h3>
+                <p className="text-sm text-gray-500">
+                  These questions appear on the welcome screen of your chatbot
+                  to help users get started quickly.
+                </p>
+
+                <div className="space-y-3">
+                  {(chatbotSettings?.exampleQuestions ?? []).map((q, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        placeholder={`Question ${index + 1}`}
+                        value={q}
+                        onChange={(e) => {
+                          const updated = [
+                            ...(chatbotSettings?.exampleQuestions ?? []),
+                          ];
+                          updated[index] = e.target.value;
+                          setChatbotSettings((prev) =>
+                            prev ? { ...prev, exampleQuestions: updated } : prev
+                          );
+                        }}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-500 hover:text-red-600 shrink-0"
+                        onClick={() => {
+                          const updated = [
+                            ...(chatbotSettings?.exampleQuestions ?? []),
+                          ].filter((_, i) => i !== index);
+                          setChatbotSettings((prev) =>
+                            prev
+                              ? { ...prev, exampleQuestions: updated }
+                              : prev
+                          );
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    const updated = [
+                      ...(chatbotSettings?.exampleQuestions ?? []),
+                      "",
+                    ];
+                    setChatbotSettings((prev) =>
+                      prev ? { ...prev, exampleQuestions: updated } : prev
+                    );
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Question
+                </Button>
               </TabsContent>
             </Tabs>
           )}

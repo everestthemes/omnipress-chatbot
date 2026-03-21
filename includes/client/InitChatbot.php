@@ -52,6 +52,16 @@ final class InitChatbot {
 		$assets = require_once OMNIPRESS_AI_CHATBOT_DIR . 'build/js/chatbot.asset.php';
 
 		wp_enqueue_script( 'omnipress-ai-chatbot', OMNIPRESS_AI_CHATBOT_URL . '/build/js/chatbot.js', $assets['dependencies'] ?? array(), $assets['version'] ?? '1.0.0', true );
+
+		wp_localize_script(
+			'omnipress-ai-chatbot',
+			'omnipressChatData',
+			array(
+				'isLoggedIn' => is_user_logged_in(),
+				'restUrl'    => esc_url_raw( rest_url( 'omnipress-ai-chatbot/v1' ) ),
+				'nonce'      => wp_create_nonce( 'wp_rest' ),
+			)
+		);
 	}
 	/**
 	 * Check if chatbot can be rendered.

@@ -48,6 +48,7 @@ class Admin {
 			return;
 		}
 
+		wp_enqueue_media();
 		$assets = require_once OMNIPRESS_AI_CHATBOT_DIR . 'build/js/index.asset.php';
 		wp_enqueue_script( 'omnipress-ai-chatbot-admin', OMNIPRESS_AI_CHATBOT_URL . 'build/js/index.js', $assets['dependencies'], $assets['version'], true );
 		wp_enqueue_style( 'omnipress-ai-chatbot-admin', OMNIPRESS_AI_CHATBOT_URL . 'build/css/global.css', array(), $assets['version'] );

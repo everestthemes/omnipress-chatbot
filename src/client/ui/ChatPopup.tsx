@@ -1,603 +1,1042 @@
 import { chatApi } from "@/src/api/chatApi";
+import { settingsApi } from "@/src/api/settings";
 import { Textarea } from "@/src/components/ui/textarea";
-import { Bot, Maximize2, Minimize2, Send, Sparkles, X } from "lucide-react";
+import {
+  Bot,
+  Mail,
+  Maximize2,
+  Minimize2,
+  Phone,
+  RefreshCw,
+  Send,
+  Sparkles,
+  User,
+  X,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
-import { Toaster } from "sonner";
+import { toast, Toaster } from "sonner";
 
 interface Message {
   content: string;
   role: "user" | "assistant";
+  timestamp?: Date;
 }
 
+// Generate a stable session ID for this browser tab
+const SESSION_ID =
+  localStorage.getItem("omnipress_chat_session_id") ||
+  "sess_" + Math.random().toString(36).substring(2) + "_" + Date.now();
+localStorage.setItem("omnipress_chat_session_id", SESSION_ID);
+
+declare global {
+  interface Window {
+    omnipressChatData?: {
+      isLoggedIn: boolean;
+      restUrl: string;
+      nonce: string;
+    };
+  }
+}
+
+// Separate component to prevent focus loss during parent re-renders
+const LeadForm = ({
+  leadData,
+  setLeadData,
+  onSubmit,
+  isSubmitting,
+}: {
+  leadData: any;
+  setLeadData: any;
+  onSubmit: (e: React.FormEvent) => void;
+  isSubmitting: boolean;
+}) => {
+  return (
+    <div style={s.leadFormWrapper}>
+      <div style={s.welcomeIconRing}>
+        <Sparkles size={28} color="#6366f1" />
+      </div>
+      <p style={s.welcomeTitle}>Welcome!</p>
+      <p style={s.welcomeSub}>Please introduce yourself to start chatting with our AI.</p>
+
+      <form onSubmit={onSubmit} style={s.form}>
+        <div style={s.inputGroup}>
+          <div style={s.fieldLabel}>Name *</div>
+          <div style={s.formInputWrapper}>
+            <User size={16} color="#9ca3af" style={s.fieldIcon} />
+            <input
+              type="text"
+              placeholder="John Doe"
+              style={s.formInput}
+              value={leadData.name}
+              onChange={(e) => setLeadData({ ...leadData, name: e.target.value })}
+              required
+            />
+          </div>
+        </div>
+
+        <div style={s.inputGroup}>
+          <div style={s.fieldLabel}>Email *</div>
+          <div style={s.formInputWrapper}>
+            <Mail size={16} color="#9ca3af" style={s.fieldIcon} />
+            <input
+              type="email"
+              placeholder="john@example.com"
+              style={s.formInput}
+              value={leadData.email}
+              onChange={(e) => setLeadData({ ...leadData, email: e.target.value })}
+              required
+            />
+          </div>
+        </div>
+
+        <div style={s.inputGroup}>
+          <div style={s.fieldLabel}>Phone Number</div>
+          <div style={s.formInputWrapper}>
+            <Phone size={16} color="#9ca3af" style={s.fieldIcon} />
+            <input
+              type="tel"
+              placeholder="+1 234 567 890"
+              style={s.formInput}
+              value={leadData.phone}
+              onChange={(e) => setLeadData({ ...leadData, phone: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          style={{ ...s.submitBtn, opacity: isSubmitting ? 0.7 : 1 }}
+        >
+          {isSubmitting ? "Saving..." : "Start Chatting"}
+        </button>
+      </form>
+    </div>
+  );
+};
+
 const ChatPopup = () => {
+  const isLoggedIn = window.omnipressChatData?.isLoggedIn || false;
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [exampleQuestions, setExampleQuestions] = useState<string[]>([]);
+  const [showLeadForm, setShowLeadForm] = useState(false);
+  const [titleText, setTitleText] = useState("AI Assistant");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [leadData, setLeadData] = useState({ name: "", email: "", phone: "" });
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSend = async () => {
-    if (inputValue.trim() && !isLoading) {
-      try {
-        setIsLoading(true);
-        const userMessage = inputValue;
-        setInputValue("");
-        setMessages([...messages, { content: userMessage, role: "user" }]);
-
-        const response = await chatApi.chat({
-          messages: messages,
-          question: userMessage,
-          client: "chatbot",
-        });
-
-        if (response.success && response.data?.messages) {
-          setMessages(response.data.messages);
-        }
-
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({
-            behavior: "smooth",
-          });
-        }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsLoading(false);
+  // Fetch chatbot settings and history
+  useEffect(() => {
+    settingsApi.get().then((res: any) => {
+      const qs = res?.data?.exampleQuestions;
+      if (Array.isArray(qs) && qs.length > 0) {
+        setExampleQuestions(qs.filter((q: string) => q.trim() !== ""));
       }
+      
+      const custom = res?.data?.customizations;
+      if (custom?.titleText) setTitleText(custom.titleText);
+      if (custom?.logoUrl) setLogoUrl(custom.logoUrl);
+
+      const isLeadCaptureEnabled = res?.data?.isEnableLeadCapture ?? false;
+
+      if (!isLoggedIn) {
+        // Check if lead form should be shown for guest
+        if (isLeadCaptureEnabled) {
+          const isLeadCaptured = localStorage.getItem("omnipress_chat_lead_captured");
+          if (!isLeadCaptured) {
+            setShowLeadForm(true);
+          }
+        }
+
+        // Load history from localStorage for guest
+        const localHistory = localStorage.getItem("omnipress_chat_history");
+        if (localHistory) {
+          try {
+            const parsed = JSON.parse(localHistory);
+            setMessages(parsed.map((m: any) => ({
+              ...m,
+              timestamp: m.timestamp ? new Date(m.timestamp) : undefined
+            })));
+          } catch (e) {
+            console.error("Failed to parse history", e);
+          }
+        }
+      } else {
+        // Load history from API for logged-in user
+        chatApi.getHistory(SESSION_ID).then((resHistory: any) => {
+          if (resHistory?.success && Array.isArray(resHistory.data)) {
+            setMessages(resHistory.data.map((m: any) => ({
+              ...m,
+              timestamp: m.timestamp ? new Date(m.timestamp) : undefined
+            })));
+          }
+        }).catch(console.error);
+      }
+    }).catch(() => { });
+  }, [isLoggedIn]);
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
 
-  const toggleChat = () => {
-    setIsOpen(!isOpen);
+  useEffect(() => {
+    if (messages.length > 0) scrollToBottom();
+  }, [messages, isLoading]);
+
+  const handleSend = async () => {
+    const trimmed = inputValue.trim();
+    if (!trimmed || isLoading) return;
+
+    const userMessage: Message = {
+      content: trimmed,
+      role: "user",
+      timestamp: new Date(),
+    };
+
+    // Append user message immediately for optimistic UI
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+
+    // Save to localStorage immediately for guests to prevent loss on refresh
+    if (!isLoggedIn) {
+      localStorage.setItem("omnipress_chat_history", JSON.stringify(updatedMessages));
+    }
+
+    setInputValue("");
+    setIsLoading(true);
+
+    try {
+      const response: any = await chatApi.chat({
+        question: trimmed,
+        sessionId: SESSION_ID,
+        messages: updatedMessages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+      });
+
+      if (response?.success && response?.data?.answer) {
+        const assistantMessage: Message = {
+          content: response.data.answer,
+          role: "assistant",
+          timestamp: new Date(),
+        };
+        const finalMessages = [...updatedMessages, assistantMessage];
+        setMessages(finalMessages);
+
+        // Save to localStorage for guests
+        if (!isLoggedIn) {
+          localStorage.setItem("omnipress_chat_history", JSON.stringify(finalMessages));
+        }
+      } else {
+        // Extract error message from remote API response
+        const errMsg =
+          response?.data?.error ||
+          response?.data?.message ||
+          response?.message ||
+          "Failed to get a response. Please try again.";
+        toast.error(errMsg);
+        // Remove optimistic user message on failure
+        setMessages(messages);
+      }
+    } catch (error: any) {
+      const errMsg =
+        error?.data?.error ||
+        error?.data?.message ||
+        error?.message ||
+        "Something went wrong. Please try again.";
+      toast.error(errMsg);
+      // Remove optimistic user message on failure
+      setMessages(messages);
+    } finally {
+      setIsLoading(false);
+      // Re-focus input
+      setTimeout(() => textareaRef.current?.focus(), 50);
+    }
+  };
+
+  const toggleChat = () => setIsOpen((prev) => !prev);
+  const clearHistory = async () => {
+    if (!confirm("Are you sure you want to clear your chat history?")) return;
+
+    setMessages([]);
+    localStorage.removeItem("omnipress_chat_history");
+
+    try {
+      await chatApi.deleteHistory(SESSION_ID);
+      toast.success("History cleared");
+    } catch (e) {
+      console.error("Failed to clear remote history", e);
+      // Even if API fails, we locally cleared it
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
   };
 
   useEffect(() => {
-    document.body.style.marginRight = isOpen ? "350px" : "0";
-    document.body.style.transition = "margin-right 0.3s ease-in-out";
-  }, [isOpen]);
+    document.body.style.marginRight = isOpen
+      ? isMaximized
+        ? "700px"
+        : "380px"
+      : "0";
+    document.body.style.transition = "margin-right 0.3s cubic-bezier(0.4,0,0.2,1)";
+  }, [isOpen, isMaximized]);
 
-  // Loading dots component
-  const LoadingDots = () => (
-    <div style={styles.loadingContainer}>
-      <div style={styles.avatar}>AI</div>
-      <div style={styles.loadingMessage}>
-        <div style={styles.loadingDots}>
-          <div style={styles.dot}></div>
-          <div style={styles.dot}></div>
-          <div style={styles.dot}></div>
+  // --- Sub-components ---
+
+  const TypingIndicator = () => (
+    <div style={s.msgRow}>
+      <div style={s.aiBubbleBase}>
+        {logoUrl ? (
+          <img src={logoUrl} alt="AI" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+        ) : (
+          <span style={s.aiAvatarText}>AI</span>
+        )}
+      </div>
+      <div style={{ ...s.bubble, ...s.aiBubble, padding: "12px 16px" }}>
+        <div style={s.typingDots}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{ ...s.dot, animationDelay: `${i * 0.15}s` }} />
+          ))}
         </div>
       </div>
     </div>
   );
 
+  const WelcomePlaceholder = () => {
+    const defaultQuestions = [
+      "What is OmniPress?",
+      "How do I back up my site?",
+      "What plans are available?",
+    ];
+    const questions = exampleQuestions.length > 0 ? exampleQuestions : defaultQuestions;
+
+    return (
+      <div style={s.welcomeWrapper}>
+        <div style={s.welcomeIconRing}>
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" style={{ width: "40px", height: "40px", borderRadius: "50%" }} />
+          ) : (
+            <Bot size={28} color="#6366f1" />
+          )}
+        </div>
+        <p style={s.welcomeTitle}>{titleText}</p>
+        <p style={s.welcomeSub}>
+          Ask me anything. Click a question to get started.
+        </p>
+        {questions.map((q) => (
+          <button
+            key={q}
+            style={s.suggestionBtn}
+            onClick={() => {
+              setInputValue(q);
+              textareaRef.current?.focus();
+            }}
+            onMouseEnter={(e) =>
+              ((e.currentTarget as HTMLElement).style.background = "#eef2ff")
+            }
+            onMouseLeave={(e) =>
+              ((e.currentTarget as HTMLElement).style.background = "transparent")
+            }
+          >
+            {q}
+          </button>
+        ))}
+      </div>
+    );
+  };
+  const handleLeadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leadData.name || !leadData.email) {
+      toast.error("Please fill in your name and email.");
+      return;
+    }
+    setIsLoading(true); // Using shared loading state or we could add isSubmittingLead
+    try {
+      await chatApi.saveLead({ ...leadData, session_id: SESSION_ID });
+      localStorage.setItem("omnipress_chat_lead_captured", "true");
+      setShowLeadForm(false);
+      toast.success("Thank you! You can now start chatting.");
+    } catch (err) {
+      toast.error("Failed to save your information. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div style={styles.container}>
+    <div style={s.container}>
       <Toaster richColors position="top-right" />
 
-      {isOpen ? (
+      {isOpen && (
         <div
           style={{
-            ...styles.chatPopup,
-            width: isMaximized ? "700px" : "350px",
-            maxWidth: "100vw",
+            ...s.panel,
+            width: isMaximized ? "700px" : "380px",
           }}
         >
-          <div style={styles.header}>
-            <div style={styles.headerContent}>
-              <div style={styles.logo}>
-                <Bot size={18} color="var(--text-color, white)" />
-                <span style={styles.logoText}>AI Assistant</span>
-                <div style={styles.statusDot}></div>
+          {/* Header */}
+          <div style={s.header}>
+            <div style={s.headerLeft}>
+              <div style={s.headerIconWrap}>
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo" style={{ width: "24px", height: "24px", borderRadius: "50%" }} />
+                ) : (
+                  <Bot size={16} color="white" />
+                )}
               </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: "4px",
-                }}
+              <div>
+                <p style={s.headerTitle}>{titleText}</p>
+                <p style={s.headerSub}>
+                  <span style={s.onlineDot} />
+                  Online
+                </p>
+              </div>
+            </div>
+            <div style={s.headerActions}>
+              <button
+                style={s.iconBtn}
+                title="Clear history"
+                onClick={clearHistory}
+                onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLElement).style.background =
+                  "rgba(255,255,255,0.25)")
+                }
+                onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLElement).style.background =
+                  "rgba(255,255,255,0.12)")
+                }
               >
-                <button
-                  style={styles.headerButton}
-                  onClick={() => setIsMaximized(!isMaximized)}
-                >
-                  {isMaximized ? (
-                    <Minimize2 color="var(--text-color, white)" size={14} />
-                  ) : (
-                    <Maximize2 color="var(--text-color, white)" size={14} />
-                  )}
-                </button>
-                <button style={styles.headerButton} onClick={toggleChat}>
-                  <X size={20} color="var(--text-color, white)" />
-                </button>
-              </div>
+                <RefreshCw size={14} color="white" />
+              </button>
+              <button
+                style={s.iconBtn}
+                title={isMaximized ? "Minimize" : "Maximize"}
+                onClick={() => setIsMaximized((prev) => !prev)}
+                onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLElement).style.background =
+                  "rgba(255,255,255,0.25)")
+                }
+                onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLElement).style.background =
+                  "rgba(255,255,255,0.12)")
+                }
+              >
+                {isMaximized ? (
+                  <Minimize2 size={14} color="white" />
+                ) : (
+                  <Maximize2 size={14} color="white" />
+                )}
+              </button>
+              <button
+                style={s.iconBtn}
+                title="Close"
+                onClick={toggleChat}
+                onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLElement).style.background =
+                  "rgba(255,255,255,0.25)")
+                }
+                onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLElement).style.background =
+                  "rgba(255,255,255,0.12)")
+                }
+              >
+                <X size={16} color="white" />
+              </button>
             </div>
           </div>
 
-          <div style={styles.messagesContainer}>
-            {messages.length > 0 ? (
+          {/* Messages */}
+          <div style={s.messagesArea}>
+            {showLeadForm ? (
+              <LeadForm 
+                leadData={leadData} 
+                setLeadData={setLeadData} 
+                onSubmit={handleLeadSubmit}
+                isSubmitting={isLoading}
+              />
+            ) : messages.length === 0 ? (
+              <WelcomePlaceholder />
+            ) : (
               <>
-                {messages.map((message, index) => (
+                {messages.map((msg, i) => (
                   <div
-                    ref={index === messages.length - 1 ? messagesEndRef : null}
-                    key={message.content}
+                    key={i}
                     style={{
-                      ...styles.messageWrapper,
-                      ...(message.role === "user"
-                        ? styles.userMessageWrapper
-                        : styles.otherMessageWrapper),
+                      ...s.msgRow,
+                      justifyContent:
+                        msg.role === "user" ? "flex-end" : "flex-start",
                     }}
                   >
-                    {message.role === "assistant" && (
-                      <div style={styles.avatar}>AI</div>
+                    {msg.role === "assistant" && (
+                      <div style={s.aiBubbleBase}>
+                        {logoUrl ? (
+                          <img src={logoUrl} alt="AI" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                        ) : (
+                          <span style={s.aiAvatarText}>AI</span>
+                        )}
+                      </div>
                     )}
                     <div
                       style={{
-                        ...styles.message,
-                        ...(message.role === "user"
-                          ? styles.userMessage
-                          : styles.otherMessage),
+                        ...s.bubble,
+                        ...(msg.role === "user" ? s.userBubble : s.aiBubble),
                       }}
                     >
-                      {message.role === "assistant" ? (
+                      {msg.role === "assistant" ? (
                         <Markdown
                           components={{
                             a: ({ node, ...props }) => (
                               <a
                                 {...props}
-                                style={{
-                                  color: "var(--link-color, #4F46E5)",
-                                }}
+                                style={{ color: "#6366f1", fontWeight: 500 }}
                                 target="_blank"
                                 rel="noopener noreferrer"
                               />
                             ),
+                            code: ({ node, ...props }) => (
+                              <code
+                                {...props}
+                                style={{
+                                  background: "#f1f5f9",
+                                  padding: "1px 5px",
+                                  borderRadius: "4px",
+                                  fontSize: "13px",
+                                  fontFamily: "monospace",
+                                }}
+                              />
+                            ),
                           }}
                         >
-                          {message.content}
+                          {msg.content}
                         </Markdown>
                       ) : (
-                        message.content
+                        msg.content
                       )}
                     </div>
-                    {message.role === "user" && (
-                      <div style={styles.avatar}>U</div>
+                    {msg.role === "user" && (
+                      <div style={s.userBubbleAvatar}>
+                        <span style={s.aiAvatarText}>U</span>
+                      </div>
                     )}
                   </div>
                 ))}
-                {/* Show loading state */}
-                {isLoading && <LoadingDots />}
+                {isLoading && <TypingIndicator />}
+                <div ref={messagesEndRef} />
               </>
-            ) : (
-              <p style={styles.placeholder}>
-                Ask me a qustions about omnipress and everest backup...
-              </p>
             )}
           </div>
 
-          <div style={styles.inputContainer}>
-            <Textarea
-              placeholder={
-                isLoading
-                  ? "AI is thinking..."
-                  : "Ask me a qustions about omnipress and everest backup..."
-              }
-              disabled={isLoading}
-              rows={4}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) =>
-                e.key === "Enter" && !e.shiftKey && handleSend()
-              }
-              style={{
-                ...styles.input,
-                opacity: isLoading ? 0.6 : 1,
-                height: "auto",
-                cursor: isLoading ? "not-allowed" : "text",
-              }}
-            />
-            <button
-              onClick={handleSend}
-              disabled={isLoading || !inputValue.trim()}
-              style={{
-                ...styles.sendButton,
-                opacity: isLoading || !inputValue.trim() ? 0.5 : 1,
-                cursor:
-                  isLoading || !inputValue.trim() ? "not-allowed" : "pointer",
-              }}
-            >
-              <Send size={16} color="var(--text-color, white)" />
-            </button>
+          {/* Input area */}
+          <div style={s.inputArea}>
+            <div style={s.inputWrapper}>
+              <Textarea
+                ref={textareaRef}
+                placeholder={
+                  isLoading
+                    ? "AI is thinking…"
+                    : "Send a message… (Enter to send)"
+                }
+                disabled={isLoading}
+                rows={2}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                style={{
+                  ...s.textarea,
+                  opacity: isLoading ? 0.6 : 1,
+                  cursor: isLoading ? "not-allowed" : "text",
+                }}
+              />
+              <button
+                onClick={handleSend}
+                disabled={isLoading || !inputValue.trim()}
+                style={{
+                  ...s.sendBtn,
+                  opacity: isLoading || !inputValue.trim() ? 0.45 : 1,
+                  cursor:
+                    isLoading || !inputValue.trim() ? "not-allowed" : "pointer",
+                  transform:
+                    isLoading || !inputValue.trim() ? "none" : "scale(1)",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isLoading && inputValue.trim())
+                    (e.currentTarget as HTMLElement).style.transform =
+                      "scale(1.08)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+                }}
+              >
+                <Send size={15} color="white" />
+              </button>
+            </div>
+            <p style={s.poweredBy}>
+              Powered by{" "}
+              <a
+                href="https://omnipressai.com"
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: "#6366f1", textDecoration: "none" }}
+              >
+                Omnipress AI
+              </a>
+            </p>
           </div>
-
-          {/* questions list */}
-
-          <p
-            style={{
-              padding: "12px",
-              textAlign: "end",
-              fontSize: "12px",
-            }}
-          >
-            Powered by{" "}
-            <a
-              style={{ color: "var(--bg-color, #4F46E5)" }}
-              href="https://omnipressai.com"
-              target="_blank"
-            >
-              Omnipress AI
-            </a>{" "}
-          </p>
         </div>
-      ) : (
+      )}
+
+      {/* Launcher button */}
+      {!isOpen && (
         <button
           onClick={toggleChat}
-          style={{ ...styles.chatIconButton }}
-          className="chatIconButton"
+          className="op-chat-launcher"
+          style={s.launcher}
         >
-          <div style={styles.buttonInner} className="buttonInner">
-            <span
-              style={{
-                marginRight: "4px",
-                color: "var(--text-color, white)",
-              }}
-            >
+          <div style={s.launcherInner} className="op-launcher-inner">
+            <Sparkles size={14} color="white" />
+            <span style={{ marginLeft: "6px", fontWeight: 600, fontSize: "14px" }}>
               Ask AI
             </span>
-            <Sparkles size={14} color="var(--text-color, white)" />
           </div>
-          <div style={styles.ripple}></div>
+          <div style={s.launcherPulse} />
         </button>
       )}
     </div>
   );
 };
 
-const styles: Record<string, React.CSSProperties> = {
+
+const BG = "var(--op-bg, linear-gradient(135deg, #4f46e5, #7c3aed))";
+const BG_SOLID = "var(--op-bg-solid, #4f46e5)";
+
+const s: Record<string, React.CSSProperties> = {
   container: {
     position: "fixed",
     bottom: "20px",
     right: "20px",
     zIndex: 10000000,
     fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   },
-  chatIconButton: {
-    width: "110px",
-    height: "50px",
-    padding: "0",
-    borderRadius: "4px",
-    background: "var(--bg-color, linear-gradient(135deg, #4F46E5, #7C3AED))",
-    color: "var(--text-color, white)",
+
+  // --- Panel ---
+  panel: {
+    position: "fixed",
+    bottom: 0,
+    right: 0,
+    height: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    boxShadow: "0 20px 60px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.06)",
+    backgroundColor: "#fff",
+    overflow: "hidden",
+    transition: "width 0.2s ease",
+  },
+
+  // --- Header ---
+  header: {
+    background: BG,
+    padding: "14px 18px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexShrink: 0,
+  },
+  headerLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+  },
+  headerIconWrap: {
+    width: "36px",
+    height: "36px",
+    borderRadius: "50%",
+    background: "rgba(255,255,255,0.18)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  headerTitle: {
+    margin: 0,
+    fontWeight: 700,
+    fontSize: "14px",
+    color: "white",
+    lineHeight: 1.2,
+  },
+  headerSub: {
+    margin: 0,
+    fontSize: "11px",
+    color: "rgba(255,255,255,0.82)",
+    display: "flex",
+    alignItems: "center",
+    gap: "5px",
+    marginTop: "2px",
+  },
+  onlineDot: {
+    width: "7px",
+    height: "7px",
+    borderRadius: "50%",
+    backgroundColor: "#4ade80",
+    display: "inline-block",
+    animation: "op-pulse 2s infinite",
+  },
+  headerActions: {
+    display: "flex",
+    gap: "6px",
+  },
+  iconBtn: {
+    width: "30px",
+    height: "30px",
+    borderRadius: "8px",
+    border: "none",
+    background: "rgba(255,255,255,0.12)",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "background 0.15s",
+  },
+
+  // --- Messages area ---
+  messagesArea: {
+    flex: 1,
+    overflowY: "auto",
+    padding: "20px 16px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "14px",
+    backgroundColor: "#f8f9fb",
+  },
+
+  // --- Welcome ---
+  welcomeWrapper: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+    textAlign: "center",
+    gap: "10px",
+    padding: "20px",
+    paddingTop: "40px",
+  },
+  welcomeIconRing: {
+    width: "64px",
+    height: "64px",
+    borderRadius: "50%",
+    background: "#eef2ff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: "6px",
+  },
+  welcomeTitle: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: 700,
+    color: "#111827",
+  },
+  welcomeSub: {
+    margin: 0,
+    fontSize: "13px",
+    color: "#6b7280",
+    maxWidth: "240px",
+    lineHeight: 1.5,
+  },
+  suggestionBtn: {
+    fontSize: "13px",
+    color: "#4f46e5",
+    cursor: "pointer",
+    padding: "7px 14px",
+    border: "1px solid #c7d2fe",
+    borderRadius: "20px",
+    background: "transparent",
+    transition: "background 0.15s",
+    marginTop: "2px",
+    lineHeight: 1.4,
+    fontFamily: "inherit",
+  },
+
+  // --- Messages ---
+  msgRow: {
+    display: "flex",
+    alignItems: "flex-end",
+    gap: "8px",
+  },
+  aiBubbleBase: {
+    width: "30px",
+    height: "30px",
+    borderRadius: "50%",
+    background: BG_SOLID,
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  userBubbleAvatar: {
+    width: "30px",
+    height: "30px",
+    borderRadius: "50%",
+    background: "#e5e7eb",
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiAvatarText: {
+    fontSize: "11px",
+    fontWeight: 700,
+    color: "white",
+  },
+  bubble: {
+    maxWidth: "78%",
+    padding: "10px 14px",
+    fontSize: "14px",
+    lineHeight: "1.55",
+    wordBreak: "break-word",
+    borderRadius: "18px",
+  },
+  userBubble: {
+    background: BG,
+    color: "white",
+    borderBottomRightRadius: "5px",
+    boxShadow: "0 2px 12px rgba(79,70,229,0.3)",
+  },
+  aiBubble: {
+    background: "white",
+    color: "#1f2937",
+    borderBottomLeftRadius: "5px",
+    border: "1px solid #f0f0f0",
+    boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
+  },
+
+  // --- Typing indicator ---
+  typingDots: {
+    display: "flex",
+    gap: "5px",
+    alignItems: "center",
+    height: "18px",
+  },
+  dot: {
+    width: "8px",
+    height: "8px",
+    borderRadius: "50%",
+    background: "#6366f1",
+    animation: "op-bounce 1.3s ease-in-out infinite",
+  },
+
+  // --- Input area ---
+  inputArea: {
+    backgroundColor: "#fff",
+    borderTop: "1px solid #f0f0f0",
+    padding: "12px 14px 8px",
+    flexShrink: 0,
+  },
+  inputWrapper: {
+    display: "flex",
+    alignItems: "flex-end",
+    gap: "8px",
+    background: "#f8f9fb",
+    borderRadius: "14px",
+    border: "1px solid #e5e7eb",
+    padding: "6px 8px 6px 12px",
+    transition: "border-color 0.2s",
+  },
+  textarea: {
+    flex: 1,
+    border: "none",
+    outline: "none",
+    backgroundColor: "transparent",
+    fontSize: "14px",
+    resize: "none",
+    lineHeight: "1.5",
+    fontFamily: "inherit",
+    color: "#1f2937",
+  },
+  sendBtn: {
+    width: "34px",
+    height: "34px",
+    borderRadius: "10px",
+    border: "none",
+    background: BG,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+    transition: "transform 0.15s, opacity 0.15s",
+    boxShadow: "0 2px 10px rgba(79,70,229,0.4)",
+  },
+  poweredBy: {
+    margin: "6px 0 0",
+    textAlign: "center",
+    fontSize: "11px",
+    color: "#9ca3af",
+  },
+
+  // --- Launcher button ---
+  launcher: {
+    height: "46px",
+    padding: "0 18px",
+    borderRadius: "23px",
+    background: BG,
     border: "none",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 8px 25px rgba(79, 70, 229, 0.4)",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    boxShadow: "0 8px 28px rgba(79,70,229,0.45)",
     position: "relative",
     overflow: "hidden",
-  },
-  chatPopup: {
-    position: "fixed",
-    bottom: "0",
-    right: "0",
-    height: "100vh",
-    backgroundColor: "white",
-    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.2)",
-    display: "flex",
-    flexDirection: "column",
-    overflow: "hidden",
-    animation: "slideUp 0.3s ease-out",
-  },
-  header: {
-    background: "var(--bg-color, linear-gradient(135deg, #4F46E5, #7C3AED))",
-    color: "var(--text-color, white)",
-    padding: "15px 20px",
-  },
-  headerContent: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  logo: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  },
-  logoIcon: {
-    fontSize: "18px",
-  },
-  logoText: {
-    fontWeight: "600",
-    fontSize: "16px",
-  },
-  statusDot: {
-    width: "8px",
-    height: "8px",
-    borderRadius: "50%",
-    backgroundColor: "#10B981",
-    marginLeft: "8px",
-    animation: "pulse-dot 2s infinite",
-  },
-  buttonInner: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
+    transition: "transform 0.2s, box-shadow 0.2s",
     color: "white",
-    zIndex: 2,
-    transition: "transform 0.2s ease",
   },
-  ripple: {
+  launcherInner: {
+    display: "flex",
+    alignItems: "center",
+    position: "relative",
+    zIndex: 2,
+    transition: "transform 0.2s",
+  },
+  launcherPulse: {
     position: "absolute",
     top: "50%",
     left: "50%",
     width: "100%",
     height: "100%",
     borderRadius: "50%",
-    background: "rgba(255, 255, 255, 0.1)",
+    background: "rgba(255,255,255,0.1)",
     transform: "translate(-50%, -50%) scale(0)",
-    animation: "ripple 2s infinite",
-  },
-  headerActions: {
-    display: "flex",
-    gap: "8px",
-  },
-  headerButton: {
-    background: "rgba(255, 255, 255, 0.2)",
-    border: "none",
-    borderRadius: "8px",
-    width: "17px",
-    height: "20px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "background-color 0.2s",
-  },
-  messagesContainer: {
-    flex: 1,
-    padding: "20px",
-    overflowY: "auto",
-    display: "flex",
-    flexDirection: "column",
-    gap: "15px",
-    backgroundColor: "#FAFAFA",
-  },
-  messageWrapper: {
-    display: "flex",
-    alignItems: "flex-end",
-    gap: "8px",
-  },
-  userMessageWrapper: {
-    justifyContent: "flex-end",
-  },
-  otherMessageWrapper: {
-    justifyContent: "flex-start",
-  },
-  message: {
-    maxWidth: "75%",
-    padding: "12px 16px",
-    borderRadius: "18px",
-    fontSize: "14px",
-    lineHeight: "1.4",
-    wordWrap: "break-word",
-  },
-  userMessage: {
-    background: "var(--bg-color, linear-gradient(135deg, #4F46E5, #7C3AED))",
-    color: "var(--text-color, white)",
-    borderBottomRightRadius: "6px",
-  },
-  otherMessage: {
-    backgroundColor: "white",
-    color: "#333",
-    borderBottomLeftRadius: "6px",
-    border: "1px solid #E5E5E5",
-  },
-  avatar: {
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
-    objectFit: "cover",
-    flexShrink: 0,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "white",
-    fontSize: "14px",
-    fontWeight: "600",
-    backgroundColor: "var(--bg-color,#4F46E5)",
-  },
-  inputContainer: {
-    backgroundColor: "white",
-    position: "relative",
-    padding: "15px 20px",
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    borderTop: "1px solid #E5E5E5",
-    paddingBottom: "0",
-  },
-  input: {
-    flex: 1,
-    border: "1px solid #E0E0E0",
-    borderRadius: "20px",
-    padding: "10px 16px",
-    fontSize: "14px",
-    outline: "none",
-    backgroundColor: "#F8F8F8",
-    transition: "border-color 0.2s, opacity 0.2s",
+    animation: "op-ripple 2s infinite",
+    zIndex: 1,
   },
 
-  sendButton: {
-    width: "40px",
-    height: "40px",
-    position: "absolute",
-    right: "30px",
-    bottom: "20px",
-    padding: "0",
-    borderRadius: "50%",
-    background: "var(--bg-color, linear-gradient(135deg, #4F46E5, #7C3AED))",
-    color: "var(--text-color, white)",
-    border: "none",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "transform 0.2s, opacity 0.2s",
-    flexShrink: 0,
-  },
-  bottomActions: {
-    padding: "15px 20px",
-    display: "flex",
-    position: "absolute",
-    bottom: "0",
-    right: "0",
-    backgroundColor: "transparent",
-    justifyContent: "center",
-    gap: "15px",
-    borderTop: "1px solid #E5E5E5",
-  },
-  actionButton: {
-    width: "50px",
-    height: "50px",
-    padding: "0",
-    borderRadius: "50%",
-    background: "var(--bg-color, linear-gradient(135deg, #4F46E5, #7C3AED))",
-    color: "var(--text-color, white)",
-    border: "none",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "transform 0.2s, box-shadow 0.2s",
-  },
-  exampleQuestionsList: {
+  // --- Lead Form ---
+  leadFormWrapper: {
     display: "flex",
     flexDirection: "column",
-    gap: "10px",
-    padding: "10px",
-    alignItems: "flex-start",
-  },
-  exampleQuestion: {
-    fontSize: "14px",
-    color: "#333",
-    cursor: "pointer",
-    margin: "0",
-    padding: "4px 12px",
-    border: "1px solid #E5E5E5",
-    borderRadius: "6px",
-    transition: "color 0.2s, opacity 0.2s",
-  },
-  // Loading state styles
-  loadingContainer: {
-    display: "flex",
-    alignItems: "flex-end",
-    gap: "8px",
-    justifyContent: "flex-start",
-  },
-  loadingMessage: {
-    backgroundColor: "white",
-    border: "1px solid #E5E5E5",
-    borderRadius: "18px",
-    borderBottomLeftRadius: "6px",
-    padding: "12px 16px",
-    maxWidth: "75%",
-  },
-  loadingDots: {
-    display: "flex",
-    gap: "4px",
     alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+    padding: "20px",
+    textAlign: "center",
   },
-  dot: {
-    width: "8px",
-    height: "8px",
-    borderRadius: "50%",
-    backgroundColor: "var(--bg-color,#4F46E5)",
-    animation: "loading-bounce 1.4s ease-in-out infinite both",
+  form: {
+    width: "100%",
+    marginTop: "20px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
+  },
+  inputGroup: {
+    textAlign: "left",
+  },
+  fieldLabel: {
+    fontSize: "12px",
+    fontWeight: 600,
+    color: "#4b5563",
+    marginBottom: "6px",
+    marginLeft: "2px",
+  },
+  formInputWrapper: {
+    display: "flex",
+    alignItems: "center",
+    background: "white",
+    border: "1px solid #e5e7eb",
+    borderRadius: "10px",
+    padding: "0 12px",
+    height: "42px",
+    transition: "border-color 0.2s, box-shadow 0.2s",
+  },
+  fieldIcon: {
+    marginRight: "10px",
+    flexShrink: 0,
+  },
+  formInput: {
+    flex: 1,
+    border: "none",
+    outline: "none",
+    fontSize: "14px",
+    color: "#1f2937",
+    background: "transparent",
+  },
+  submitBtn: {
+    marginTop: "10px",
+    height: "44px",
+    background: BG,
+    color: "white",
+    border: "none",
+    borderRadius: "10px",
+    fontSize: "14px",
+    fontWeight: 600,
+    cursor: "pointer",
+    boxShadow: "0 4px 12px rgba(79,70,229,0.3)",
+    transition: "transform 0.2s, box-shadow 0.2s",
   },
 };
 
-// Add CSS animations for clean AI effects
-const styleSheet = document.createElement("style");
-styleSheet.innerHTML = `
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
+// Inject keyframe animations once
+if (typeof document !== "undefined" && !document.getElementById("op-chat-styles")) {
+  const styleEl = document.createElement("style");
+  styleEl.id = "op-chat-styles";
+  styleEl.innerHTML = `
+    @keyframes op-bounce {
+      0%, 60%, 100% { transform: scale(0.8); opacity: 0.5; }
+      30% { transform: scale(1); opacity: 1; }
     }
-    to {
-      opacity: 1;
-      transform: translateY(0);
+    @keyframes op-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.2); }
     }
-  }
-
-  @keyframes ripple {
-    0% {
-      transform: translate(-50%, -50%) scale(0);
-      opacity: 1;
+    @keyframes op-ripple {
+      0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(4); opacity: 0; }
     }
-    100% {
-      transform: translate(-50%, -50%) scale(4);
-      opacity: 0;
+    @keyframes op-slide-in {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-  }
 
-  @keyframes pulse-dot {
-    0%, 100% {
-      opacity: 1;
-      transform: scale(1);
+    /* Launcher hover */
+    .op-chat-launcher:hover {
+      transform: translateY(-2px) scale(1.04);
+      box-shadow: 0 14px 36px rgba(79,70,229,0.5);
     }
-    50% {
-      opacity: 0.5;
-      transform: scale(1.1);
+    .op-chat-launcher:active { transform: scale(0.96); }
+    .op-chat-launcher:hover .op-launcher-inner { transform: scale(1.06); }
+
+    /* Textarea focus ring */
+    .op-chat-launcher ~ * textarea:focus {
+      box-shadow: none;
+      border-color: transparent;
     }
-  }
 
-  @keyframes loading-bounce {
-    0%, 80%, 100% {
-      transform: scale(0.8);
-      opacity: 0.5;
+    /* Message animation */
+    [data-op-bubble] {
+      animation: op-slide-in 0.2s ease;
     }
-    40% {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
 
-  .chatIconButton:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 12px 35px rgba(79, 70, 229, 0.5);
-  }
-
-  .chatIconButton:hover .buttonInner {
-    transform: scale(1.1);
-  }
-
-  .chatIconButton:active {
-    transform: translateY(0) scale(0.95);
-  }
-
-  input:focus {
-    border-color: #4F46E5 !important;
-  }
-
-  /* Stagger the loading dot animations */
-  .loading-dots .dot:nth-child(1) {
-    animation-delay: -0.32s;
-  }
-
-  .loading-dots .dot:nth-child(2) {
-    animation-delay: -0.16s;
-  }
-
-  .loading-dots .dot:nth-child(3) {
-    animation-delay: 0s;
-  }
-`;
-document.head.appendChild(styleSheet);
+    /* Scrollbar */
+    [data-op-messages]::-webkit-scrollbar { width: 4px; }
+    [data-op-messages]::-webkit-scrollbar-track { background: transparent; }
+    [data-op-messages]::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+  `;
+  document.head.appendChild(styleEl);
+}
 
 export default ChatPopup;
