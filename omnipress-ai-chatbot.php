@@ -33,6 +33,7 @@ if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
 			<div class="notice notice-error">
 				<p><?php esc_html_e( 'Omnipress AI Chatbot requires PHP version 7.4 or higher.', 'omnipress-ai-chatbot' ); ?></p>
 			</div>
+
 			<?php
 		}
 	);

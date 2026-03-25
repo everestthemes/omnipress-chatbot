@@ -101,6 +101,18 @@ final class InitChatbot {
 		if ( is_object( $admin_settings->customizations ) && ! empty( $admin_settings->customizations->linkColor ) ) {
 			$css_variables .= '--link-color: ' . $admin_settings->customizations->linkColor . ';';
 		}
+
+		if ( is_object( $admin_settings->customizations ) ) {
+			if ( ! empty( $admin_settings->customizations->launcherPosition ) ) {
+				$css_variables .= '--launcher-pos: ' . $admin_settings->customizations->launcherPosition . ';';
+			}
+			if ( ! empty( $admin_settings->customizations->launcherVerticalSpacing ) ) {
+				$css_variables .= '--launcher-vertical: ' . $admin_settings->customizations->launcherVerticalSpacing . 'px;';
+			}
+			if ( ! empty( $admin_settings->customizations->launcherSideSpacing ) ) {
+				$css_variables .= '--launcher-side: ' . $admin_settings->customizations->launcherSideSpacing . 'px;';
+			}
+		}
 		?>
 		<div style="<?php echo esc_attr( $css_variables ); ?>" id="omnipress-ai-chatbot">omnipress ai chat bot</div>
 		<?php

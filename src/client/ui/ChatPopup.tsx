@@ -51,6 +51,8 @@ const LeadForm = ({
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
 }) => {
+
+
   return (
     <div style={s.leadFormWrapper}>
       <div style={s.welcomeIconRing}>
@@ -127,6 +129,10 @@ const ChatPopup = () => {
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [titleText, setTitleText] = useState("AI Assistant");
   const [logoUrl, setLogoUrl] = useState("");
+  const [launcherText, setLauncherText] = useState("Ask AI");
+  const [launcherPosition, setLauncherPosition] = useState("bottom-right");
+  const [launcherVerticalSpacing, setLauncherVerticalSpacing] = useState(20);
+  const [launcherSideSpacing, setLauncherSideSpacing] = useState(20);
   const [leadData, setLeadData] = useState({ name: "", email: "", phone: "" });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -138,10 +144,14 @@ const ChatPopup = () => {
       if (Array.isArray(qs) && qs.length > 0) {
         setExampleQuestions(qs.filter((q: string) => q.trim() !== ""));
       }
-      
+
       const custom = res?.data?.customizations;
       if (custom?.titleText) setTitleText(custom.titleText);
       if (custom?.logoUrl) setLogoUrl(custom.logoUrl);
+      if (custom?.launcherText) setLauncherText(custom.launcherText);
+      if (custom?.launcherPosition) setLauncherPosition(custom.launcherPosition);
+      if (custom?.launcherVerticalSpacing) setLauncherVerticalSpacing(custom.launcherVerticalSpacing);
+      if (custom?.launcherSideSpacing) setLauncherSideSpacing(custom.launcherSideSpacing);
 
       const isLeadCaptureEnabled = res?.data?.isEnableLeadCapture ?? false;
 
@@ -287,13 +297,19 @@ const ChatPopup = () => {
   };
 
   useEffect(() => {
-    document.body.style.marginRight = isOpen
-      ? isMaximized
-        ? "700px"
-        : "380px"
-      : "0";
-    document.body.style.transition = "margin-right 0.3s cubic-bezier(0.4,0,0.2,1)";
-  }, [isOpen, isMaximized]);
+    const margin = isOpen ? (isMaximized ? "700px" : "380px") : "0";
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    if (!isMobile) {
+      if (launcherPosition === "bottom-right" || launcherPosition === "top-right") {
+        document.body.style.marginRight = margin;
+        document.body.style.marginLeft = "0";
+      } else {
+        document.body.style.marginLeft = margin;
+        document.body.style.marginRight = "0";
+      }
+    }
+    document.body.style.transition = "margin 0.3s cubic-bezier(0.4,0,0.2,1)";
+  }, [isOpen, isMaximized, launcherPosition]);
 
   // --- Sub-components ---
 
@@ -378,14 +394,28 @@ const ChatPopup = () => {
   };
 
   return (
-    <div style={s.container}>
+    <div
+      style={{
+        ...s.container,
+        ...(launcherPosition.startsWith("top-")
+          ? { top: `${launcherVerticalSpacing}px`, bottom: "auto" }
+          : { bottom: `${launcherVerticalSpacing}px`, top: "auto" }),
+        ...(launcherPosition.endsWith("-right")
+          ? { right: `${launcherSideSpacing}px`, left: "auto" }
+          : { left: `${launcherSideSpacing}px`, right: "auto" }),
+      }}
+    >
       <Toaster richColors position="top-right" />
 
       {isOpen && (
         <div
+          className="op-chat-panel"
           style={{
             ...s.panel,
             width: isMaximized ? "700px" : "380px",
+            maxWidth: "calc(100vw-28px)",
+            ...(launcherPosition.startsWith("top-") ? { top: 0, bottom: "auto" } : { bottom: 0, top: "auto" }),
+            ...(launcherPosition.endsWith("-right") ? { right: 0, left: "auto" } : { left: 0, right: "auto" }),
           }}
         >
           {/* Header */}
@@ -462,9 +492,9 @@ const ChatPopup = () => {
           {/* Messages */}
           <div style={s.messagesArea}>
             {showLeadForm ? (
-              <LeadForm 
-                leadData={leadData} 
-                setLeadData={setLeadData} 
+              <LeadForm
+                leadData={leadData}
+                setLeadData={setLeadData}
                 onSubmit={handleLeadSubmit}
                 isSubmitting={isLoading}
               />
@@ -539,7 +569,6 @@ const ChatPopup = () => {
               </>
             )}
           </div>
-
           {/* Input area */}
           <div style={s.inputArea}>
             <div style={s.inputWrapper}>
@@ -609,7 +638,7 @@ const ChatPopup = () => {
           <div style={s.launcherInner} className="op-launcher-inner">
             <Sparkles size={14} color="white" />
             <span style={{ marginLeft: "6px", fontWeight: 600, fontSize: "14px" }}>
-              Ask AI
+              {launcherText}
             </span>
           </div>
           <div style={s.launcherPulse} />
@@ -1035,6 +1064,26 @@ if (typeof document !== "undefined" && !document.getElementById("op-chat-styles"
     [data-op-messages]::-webkit-scrollbar { width: 4px; }
     [data-op-messages]::-webkit-scrollbar-track { background: transparent; }
     [data-op-messages]::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .op-chat-panel {
+        width: 100% !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        z-index: 9999999 !important;
+      }
+      body {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+    }
   `;
   document.head.appendChild(styleEl);
 }

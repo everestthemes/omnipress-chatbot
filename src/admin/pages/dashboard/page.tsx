@@ -33,6 +33,10 @@ const tabs = [
     value: "client",
   },
   {
+    label: "Appearance",
+    value: "appearance",
+  },
+  {
     label: "Example Questions",
     value: "example_questions",
   },
@@ -49,6 +53,10 @@ interface ChatbotSettings {
     logoUrl: string;
     titleText: string;
     iconPosition: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+    launcherText?: string;
+    launcherPosition?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+    launcherVerticalSpacing?: number;
+    launcherSideSpacing?: number;
   };
   client?: {
     name: string;
@@ -68,7 +76,7 @@ export const DashboardPage = () => {
     setLoading(true);
     settingsApi
       .get()
-      .then((res) => {
+      .then((res: any) => {
         setChatbotSettings(res.data);
       })
       .finally(() => {
@@ -87,7 +95,7 @@ export const DashboardPage = () => {
     }
   };
 
-  function setNestedValueRecursive(obj, path, value) {
+  function setNestedValueRecursive(obj: any, path: string, value: any) {
     const [first, ...rest] = path.split(".");
     if (rest.length === 0) {
       obj[first] = value;
@@ -102,7 +110,7 @@ export const DashboardPage = () => {
   }
 
   const onChangeHandler =
-    (key: string) => (value: string | boolean | undefined) => {
+    (key: string) => (value: string | boolean | number | undefined) => {
       if (key.includes(".")) {
         let obj = { ...chatbotSettings };
         setNestedValueRecursive(obj, key, value);
@@ -120,7 +128,7 @@ export const DashboardPage = () => {
       <Toaster richColors />
       <Card>
         <CardHeader>
-          <h3 className="text-xl font-bold !text-foreground">
+          <h3 className="text-xl font-bold text-foreground!">
             Chatbot Settings
           </h3>
         </CardHeader>
@@ -153,7 +161,7 @@ export const DashboardPage = () => {
                         align="start"
                         className="max-w-[300px] bg-white border border-gray-200"
                       >
-                        <p className="!text-gray-500">
+                        <p className="text-gray-500!">
                           Enter your Omnipress api Key. You can get it from
                           <a
                             className="text-blue-500 hover:underline"
@@ -192,7 +200,7 @@ export const DashboardPage = () => {
                       align="start"
                       className="max-w-[300px] bg-white border border-gray-200 mb-2"
                     >
-                      <p className="!text-gray-500 mb-2">
+                      <p className="text-gray-500! mb-2">
                         When Enable this option, the chatbot will be visible on
                         your website.
                       </p>
@@ -309,9 +317,77 @@ export const DashboardPage = () => {
                   />
                 </div>
               </TabsContent>
+              <TabsContent className="p-4 space-y-4" value="appearance">
+                <h3 className="text-xl font-bold text-foreground!">
+                  Appearance Settings
+                </h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="launcherText">Launcher Button Text</Label>
+                    <Input
+                      id="launcherText"
+                      value={chatbotSettings?.customizations?.launcherText ?? "Ask AI"}
+                      onChange={(e) =>
+                        onChangeHandler("customizations.launcherText")(
+                          e.target.value
+                        )
+                      }
+                      placeholder="e.g. Ask AI"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="launcherPosition">Launcher Position</Label>
+                    <select
+                      id="launcherPosition"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={chatbotSettings?.customizations?.launcherPosition ?? "bottom-right"}
+                      onChange={(e) =>
+                        onChangeHandler("customizations.launcherPosition")(
+                          e.target.value as any
+                        )
+                      }
+                    >
+                      <option value="bottom-right">Bottom Right</option>
+                      <option value="bottom-left">Bottom Left</option>
+                      <option value="top-right">Top Right</option>
+                      <option value="top-left">Top Left</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="launcherVerticalSpacing">Vertical Spacing (px)</Label>
+                      <Input
+                        id="launcherVerticalSpacing"
+                        type="number"
+                        value={chatbotSettings?.customizations?.launcherVerticalSpacing ?? 20}
+                        onChange={(e) =>
+                          onChangeHandler("customizations.launcherVerticalSpacing")(
+                            parseInt(e.target.value)
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="launcherSideSpacing">Side Spacing (px)</Label>
+                      <Input
+                        id="launcherSideSpacing"
+                        type="number"
+                        value={chatbotSettings?.customizations?.launcherSideSpacing ?? 20}
+                        onChange={(e) =>
+                          onChangeHandler("customizations.launcherSideSpacing")(
+                            parseInt(e.target.value)
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
 
               <TabsContent className="p-4 space-y-4" value="example_questions">
-                <h3 className="text-xl font-bold !text-foreground">
+                <h3 className="text-xl font-bold text-foreground!">
                   Example Questions
                 </h3>
                 <p className="text-sm text-gray-500">
